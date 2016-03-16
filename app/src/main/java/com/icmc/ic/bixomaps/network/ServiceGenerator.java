@@ -1,11 +1,8 @@
 package com.icmc.ic.bixomaps.network;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
 import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.converter.simplexml.SimpleXmlConverterFactory;
 
 /**
  * ServiceGenerator is our API/HTTP client generator.
@@ -13,16 +10,20 @@ import retrofit2.converter.gson.GsonConverterFactory;
  * @author caiolopes
  */
 public class ServiceGenerator {
-    public static final String API_BASE_URL = "";
+    public static final String API_BASE_URL = "http://143.107.183.246:8080";
 
     private static OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
-    private static Gson gson = new GsonBuilder()
+    /*private static Gson gson = new GsonBuilder()
             .setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
-            .create();
+            .create();*/
+
+    /*private static Retrofit.Builder builder = new Retrofit.Builder()
+            .baseUrl(API_BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create(gson));*/
 
     private static Retrofit.Builder builder = new Retrofit.Builder()
             .baseUrl(API_BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create(gson));
+            .addConverterFactory(SimpleXmlConverterFactory.create());
 
     public static <T> T createService(Class<T> serviceClass) {
         Retrofit retrofit = builder.client(httpClient.build()).build();

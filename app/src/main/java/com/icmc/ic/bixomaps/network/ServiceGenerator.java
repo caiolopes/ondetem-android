@@ -2,6 +2,7 @@ package com.icmc.ic.bixomaps.network;
 
 import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.simplexml.SimpleXmlConverterFactory;
 
 /**
@@ -23,6 +24,7 @@ public class ServiceGenerator {
 
     private static Retrofit.Builder builder = new Retrofit.Builder()
             .baseUrl(API_BASE_URL)
+            .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
             .addConverterFactory(SimpleXmlConverterFactory.create());
 
     public static <T> T createService(Class<T> serviceClass) {

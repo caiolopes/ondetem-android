@@ -39,7 +39,20 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.icmc.ic.bixomaps.models.MessageRequest;
+import com.icmc.ic.bixomaps.models.MessageResponse;
+import com.icmc.ic.bixomaps.network.PoiClient;
+import com.icmc.ic.bixomaps.network.ServiceGenerator;
 import com.icmc.ic.bixomaps.utils.Helper;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import rx.Observable;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback,
@@ -123,6 +136,44 @@ public class MainActivity extends AppCompatActivity
                     mGoogleApiClient);
             if (mLastLocation != null) {
                 updateMap(mLastLocation);
+                PoiClient client = ServiceGenerator.createService(PoiClient.class);
+                MessageRequest request = new MessageRequest();
+                MessageRequest.Recommend recommend = new MessageRequest.Recommend();
+                MessageRequest.User user = new MessageRequest.User();
+                user.setId(Build.SERIAL);
+                SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                Date now = new Date();
+                user.setDate(sdfDate.format(now));
+                user.setLat("" + mLastLocation.getLatitude());
+                user.setLong("" + mLastLocation.getLongitude());
+                MessageRequest.Place place = new MessageRequest.Place();
+                place.setCategory("food_drink");
+                recommend.setPlace(place);
+                recommend.setUser(user);
+                request.setRecommend(recommend);
+                Observable<MessageResponse> responseObservable = client.getRecommendations(request);
+                Log.v(TAG, "Making request...");
+                responseObservable.subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(new Subscriber<MessageResponse>() {
+                            @Override
+                            public void onCompleted() {
+                            }
+
+                            @Override
+                            public void onError(Throwable e) {
+                            }
+
+                            @Override
+                            public void onNext(MessageResponse messageResponse) {
+                                for(MessageResponse.Place p : messageResponse.getReply().getRecommendations()) {
+                                    mMap.addMarker(new MarkerOptions()
+                                            .position(new LatLng(Double.parseDouble(p.getLat()),
+                                                    Double.parseDouble(p.getLong())))
+                                                    .title(p.getName()));
+                                }
+                            }
+                        });
             }
             if (mRequestingLocationUpdates) {
                 startLocationUpdates();

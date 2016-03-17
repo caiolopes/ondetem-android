@@ -101,7 +101,7 @@ public class MessageResponse {
         public void setReviews(List<Reviews> _value) { this.reviews = _value; }
     }
 
-    public static class Review {
+    public static class Reviews {
         @Attribute(name="id", required = false)
         String id;
 
@@ -125,13 +125,5 @@ public class MessageResponse {
 
         public String getTime() { return this.time; }
         public void setTime(String _value) { this.time = _value; }
-    }
-
-    public static class Reviews {
-        @Element(name="review", required = false)
-        Review review;
-
-        public Review getReview() { return this.review; }
-        public void setReview(Review _value) { this.review = _value; }
     }
 }

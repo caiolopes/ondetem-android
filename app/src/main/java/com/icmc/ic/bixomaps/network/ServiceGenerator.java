@@ -1,5 +1,9 @@
 package com.icmc.ic.bixomaps.network;
 
+import org.simpleframework.xml.Serializer;
+import org.simpleframework.xml.core.Persister;
+import org.simpleframework.xml.stream.Format;
+
 import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
@@ -22,10 +26,13 @@ public class ServiceGenerator {
             .baseUrl(API_BASE_URL)
             .addConverterFactory(GsonConverterFactory.create(gson));*/
 
+    private static Serializer serializer = new Persister(new Format(
+            "<?xml version=\"1.0\" encoding= \"UTF-8\" ?>"));
+
     private static Retrofit.Builder builder = new Retrofit.Builder()
             .baseUrl(API_BASE_URL)
             .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
-            .addConverterFactory(SimpleXmlConverterFactory.create());
+            .addConverterFactory(SimpleXmlConverterFactory.create(serializer));
 
     public static <T> T createService(Class<T> serviceClass) {
         Retrofit retrofit = builder.client(httpClient.build()).build();

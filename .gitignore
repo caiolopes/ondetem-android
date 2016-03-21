@@ -1,4 +1,3 @@
-*.iml
 .gradle
 /local.properties
 /.idea/workspace.xml
@@ -6,3 +5,43 @@
 .DS_Store
 /build
 /captures
+/debug
+/daogenerator
+
+.DS_Store
+
+# built application files
+*.apk
+*.ap_
+
+# files for the dex VM
+*.dex
+
+# Java class files
+*.class
+
+# generated files
+bin/  
+gen/
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Eclipse project files
+.classpath
+.project
+
+# Android Studio
+.idea/
+.gradle
+gradle  
+/*/local.properties
+/*/out
+/*/*/build
+build  
+/*/*/production
+*.iml
+*.iws
+*.ipr
+*~
+*.swp

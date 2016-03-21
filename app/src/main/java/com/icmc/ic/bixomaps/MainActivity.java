@@ -46,9 +46,12 @@ import com.icmc.ic.bixomaps.network.PoiClient;
 import com.icmc.ic.bixomaps.network.ServiceGenerator;
 import com.icmc.ic.bixomaps.utils.Helper;
 
+import org.simpleframework.xml.core.Persister;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import okhttp3.ResponseBody;
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
@@ -151,11 +154,11 @@ public class MainActivity extends AppCompatActivity
                 recommend.setPlace(place);
                 recommend.setUser(user);
                 request.setRecommend(recommend);
-                Observable<MessageResponse> responseObservable = client.getRecommendations(request);
+                Observable<ResponseBody> responseObservable = client.getRecommendations(request);
                 Log.v(TAG, "Making request...");
                 responseObservable.subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new Subscriber<MessageResponse>() {
+                        .subscribe(new Subscriber<ResponseBody>() {
                             @Override
                             public void onCompleted() {
                             }
@@ -165,12 +168,23 @@ public class MainActivity extends AppCompatActivity
                             }
 
                             @Override
-                            public void onNext(MessageResponse messageResponse) {
-                                for(MessageResponse.Place p : messageResponse.getReply().getRecommendations()) {
-                                    mMap.addMarker(new MarkerOptions()
-                                            .position(new LatLng(Double.parseDouble(p.getLat()),
-                                                    Double.parseDouble(p.getLong())))
-                                                    .title(p.getName()));
+                            public void onNext(ResponseBody messageResponse) {
+                                MessageResponse response = null;
+                                try {
+                                    String ret = new String(messageResponse.bytes(), "ISO-8859-1");
+                                    Persister persister = new Persister();
+                                    response = persister.read(MessageResponse.class, ret);
+                                } catch (Exception e) {
+                                    Log.e(TAG, "Error reading and converting response", e);
+                                }
+
+                                if (response != null) {
+                                    for(MessageResponse.Place p : response.getReply().getRecommendations()) {
+                                        mMap.addMarker(new MarkerOptions()
+                                                .position(new LatLng(Double.parseDouble(p.getLat()),
+                                                        Double.parseDouble(p.getLong())))
+                                                .title(p.getName()));
+                                    }
                                 }
                             }
                         });

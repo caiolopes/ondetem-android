@@ -4,6 +4,27 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
+    <!-- Drawer Menu -->
+    <string name="category_car">Serviços Automotivos</string>
+    <string name="category_bank">Bancos</string>
+    <string name="category_education">Educação</string>
+    <string name="category_medical">Hospitais e Clínicas</string>
+    <string name="category_emergency">Emergências</string>
+    <string name="category_culture">Cultura e Entretenimento</string>
+    <string name="category_food">Alimentação</string>
+    <string name="category_government">Orgãos Governamentais</string>
+    <string name="category_lodging">Hospedagem</string>
+    <string name="category_recreation">Recreação</string>
+    <string name="category_publicservices">Serviços Públicos</string>
+    <string name="category_shops">Compras</string>
+    <string name="category_transport">Transporte Público</string>
+    <string name="category_worship">Locais de Adoração</string>
+    <string name="category_home">Serviços Domésticos</string>
+    <string name="category_beauty">Beleza</string>
+    <string name="category_administrative">Serviços Administrativos</string>
+    <string name="category_animal">Pet Shops</string>
+    <string name="category_notary">Tabelião e Correios</string>
+
     <string name="action_settings">Opções</string>
     <string name="title_activity_maps">Map</string>
 ***REMOVED***

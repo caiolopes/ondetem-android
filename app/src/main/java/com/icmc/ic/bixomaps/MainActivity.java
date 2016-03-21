@@ -10,12 +10,13 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
@@ -34,31 +35,31 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.icmc.ic.bixomaps.models.MessageRequest;
 import com.icmc.ic.bixomaps.models.MessageResponse;
-import com.icmc.ic.bixomaps.network.PoiClient;
-import com.icmc.ic.bixomaps.network.ServiceGenerator;
 import com.icmc.ic.bixomaps.utils.Helper;
+import com.icmc.ic.bixomaps.views.adapters.MenuAdapter;
 
 import org.simpleframework.xml.core.Persister;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.Map;
+import java.util.TreeMap;
 
 import okhttp3.ResponseBody;
-import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback,
+        implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, LocationListener {
     public static final String TAG = MainActivity.class.getSimpleName();
@@ -69,6 +70,8 @@ public class MainActivity extends AppCompatActivity
     private static final int REQUEST_ACCESS_FINE_LOCATION = 0;
     private final static int REQUEST_LOCATION = 199;
     private boolean mRequestingLocationUpdates;
+    private Map<String, Integer> mMenuList;
+    private MainPresenter mPresenter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,8 +97,8 @@ public class MainActivity extends AppCompatActivity
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
+        //NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        //navigationView.setNavigationItemSelectedListener(this);
 
         requestLocationPermission(this);
 
@@ -105,6 +108,39 @@ public class MainActivity extends AppCompatActivity
         mapFragment.getMapAsync(this);
 
         setupLocationServices();
+
+        createDrawerMenu();
+
+        mPresenter = new MainPresenter();
+    }
+
+    void createDrawerMenu() {
+        mMenuList = new TreeMap<>();
+        mMenuList.put(getString(R.string.category_car), R.drawable.ic_menu_restaurant_vector);
+        mMenuList.put(getString(R.string.category_bank), R.drawable.ic_menu_restaurant_vector);
+        mMenuList.put(getString(R.string.category_education), R.drawable.ic_menu_education_vector);
+        mMenuList.put(getString(R.string.category_medical), R.drawable.ic_menu_restaurant_vector);
+        mMenuList.put(getString(R.string.category_emergency), R.drawable.ic_menu_restaurant_vector);
+        mMenuList.put(getString(R.string.category_culture), R.drawable.ic_menu_restaurant_vector);
+        mMenuList.put(getString(R.string.category_food), R.drawable.ic_menu_restaurant_vector);
+        mMenuList.put(getString(R.string.category_government), R.drawable.ic_menu_restaurant_vector);
+        mMenuList.put(getString(R.string.category_lodging), R.drawable.ic_menu_restaurant_vector);
+        mMenuList.put(getString(R.string.category_recreation), R.drawable.ic_menu_restaurant_vector);
+        mMenuList.put(getString(R.string.category_publicservices), R.drawable.ic_menu_restaurant_vector);
+        mMenuList.put(getString(R.string.category_shops), R.drawable.ic_menu_restaurant_vector);
+        mMenuList.put(getString(R.string.category_transport), R.drawable.ic_menu_restaurant_vector);
+        mMenuList.put(getString(R.string.category_worship), R.drawable.ic_menu_restaurant_vector);
+        mMenuList.put(getString(R.string.category_home), R.drawable.ic_menu_restaurant_vector);
+        mMenuList.put(getString(R.string.category_beauty), R.drawable.ic_menu_restaurant_vector);
+        mMenuList.put(getString(R.string.category_administrative), R.drawable.ic_menu_restaurant_vector);
+        mMenuList.put(getString(R.string.category_animal), R.drawable.ic_menu_restaurant_vector);
+
+        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.menu_list);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        recyclerView.setHasFixedSize(true);
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        MenuAdapter adapter = new MenuAdapter(this, mMenuList);
+        recyclerView.setAdapter(adapter);
     }
 
     protected void onStart() {
@@ -139,55 +175,7 @@ public class MainActivity extends AppCompatActivity
                     mGoogleApiClient);
             if (mLastLocation != null) {
                 updateMap(mLastLocation);
-                PoiClient client = ServiceGenerator.createService(PoiClient.class);
-                MessageRequest request = new MessageRequest();
-                MessageRequest.Recommend recommend = new MessageRequest.Recommend();
-                MessageRequest.User user = new MessageRequest.User();
-                user.setId(Build.SERIAL);
-                SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                Date now = new Date();
-                user.setDate(sdfDate.format(now));
-                user.setLat("" + mLastLocation.getLatitude());
-                user.setLong("" + mLastLocation.getLongitude());
-                MessageRequest.Place place = new MessageRequest.Place();
-                place.setCategory("food_drink");
-                recommend.setPlace(place);
-                recommend.setUser(user);
-                request.setRecommend(recommend);
-                Observable<ResponseBody> responseObservable = client.getRecommendations(request);
-                Log.v(TAG, "Making request...");
-                responseObservable.subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new Subscriber<ResponseBody>() {
-                            @Override
-                            public void onCompleted() {
-                            }
-
-                            @Override
-                            public void onError(Throwable e) {
-                            }
-
-                            @Override
-                            public void onNext(ResponseBody messageResponse) {
-                                MessageResponse response = null;
-                                try {
-                                    String ret = new String(messageResponse.bytes(), "ISO-8859-1");
-                                    Persister persister = new Persister();
-                                    response = persister.read(MessageResponse.class, ret);
-                                } catch (Exception e) {
-                                    Log.e(TAG, "Error reading and converting response", e);
-                                }
-
-                                if (response != null) {
-                                    for(MessageResponse.Place p : response.getReply().getRecommendations()) {
-                                        mMap.addMarker(new MarkerOptions()
-                                                .position(new LatLng(Double.parseDouble(p.getLat()),
-                                                        Double.parseDouble(p.getLong())))
-                                                .title(p.getName()));
-                                    }
-                                }
-                            }
-                        });
+                getRecommendations(null);
             }
             if (mRequestingLocationUpdates) {
                 startLocationUpdates();
@@ -345,31 +333,15 @@ public class MainActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
-    @Override
+    /*
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
-        int id = item.getItemId();
-
-        /*
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
-
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
-
-        }*/
+        //int id = item.getItemId();
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
-    }
+    }*/
 
     private void updateMap(Location location) {
         mMap.animateCamera(
@@ -392,6 +364,7 @@ public class MainActivity extends AppCompatActivity
 
         if(checkPermission()) {
             mMap.setMyLocationEnabled(true);
+            //mMap.getUiSettings().setZoomControlsEnabled(true);
         }
     }
 
@@ -441,6 +414,58 @@ public class MainActivity extends AppCompatActivity
                 break;
             default:
                 super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
+    }
+
+    public void getRecommendations(String category) {
+        if (mLastLocation != null) {
+            if (category == null)
+                category = "food_drink";
+
+            mPresenter.getRecommendations(mLastLocation, category).subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Subscriber<ResponseBody>() {
+                        @Override
+                        public void onCompleted() {
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                        }
+
+                        @Override
+                        public void onNext(ResponseBody messageResponse) {
+                            MessageResponse response = null;
+                            try {
+                                String ret = new String(messageResponse.bytes(), "ISO-8859-1");
+                                Persister persister = new Persister();
+                                response = persister.read(MessageResponse.class, ret);
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error reading and converting response", e);
+                            }
+
+                            if (response != null) {
+                                mMap.clear();
+                                LatLngBounds.Builder builder = new LatLngBounds.Builder();
+                                for (MessageResponse.Place p : response.getReply().getRecommendations()) {
+                                    Marker marker = mMap.addMarker(new MarkerOptions()
+                                            .position(new LatLng(Double.parseDouble(p.getLat()),
+                                                    Double.parseDouble(p.getLong())))
+                                            .title(p.getName()));
+                                    builder.include(marker.getPosition());
+                                }
+                                // Include user position
+                                builder.include(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()));
+                                LatLngBounds bounds = builder.build();
+                                int padding = 100;
+                                CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+                                mMap.animateCamera(cu);
+                                DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+                                if (drawer.isDrawerOpen(GravityCompat.START))
+                                    drawer.closeDrawer(GravityCompat.START);
+                            }
+                        }
+                    });
         }
     }
 }

@@ -5,6 +5,8 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.icmc.ic.bixomaps.MainActivity;
@@ -23,16 +25,19 @@ public class MenuAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int HEADER = 0;
     private static final int ITEM = 1;
     private Map<String, Integer> mMenuList;
-    private int focusedItem = 1;
-    private String mCategory;
+    private int focusedItem = 0;
     private MainActivity mContext;
 
     public static class MenuItem extends RecyclerView.ViewHolder implements View.OnClickListener {
+        LinearLayout box;
         TextView text;
+        ProgressBar progress;
         ItemClickListener itemClickListener;
         public MenuItem(View itemView) {
             super(itemView);
+            box = (LinearLayout) itemView.findViewById(R.id.category_box);
             text = (TextView) itemView.findViewById(android.R.id.text1);
+            progress = (ProgressBar) itemView.findViewById(R.id.category_loading);
             itemView.setOnClickListener(this);
         }
 
@@ -58,13 +63,17 @@ public class MenuAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, final int position) {
         if (holder instanceof MenuItem) {
             final MenuItem item = (MenuItem) holder;
 
+            item.progress.setVisibility(View.GONE);
+
             if (focusedItem == position) {
+                item.box.setBackgroundColor(mContext.getResources().getColor(R.color.mediumGray));
                 item.text.setTextColor(Color.BLUE);
             } else {
+                item.box.setBackgroundColor(mContext.getResources().getColor(android.R.color.background_light));
                 item.text.setTextColor(Color.BLACK);
             }
 
@@ -82,7 +91,8 @@ public class MenuAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                             focusedItem = position;
                             notifyItemChanged(aux);
                             notifyItemChanged(focusedItem);
-                            mContext.getRecommendations(Helper.getCategoryField(item.text.getText().toString(), mContext));
+                            item.progress.setVisibility(View.VISIBLE);
+                            mContext.getRecommendations(Helper.getCategoryField(item.text.getText().toString(), mContext), position);
                         }
                     });
 

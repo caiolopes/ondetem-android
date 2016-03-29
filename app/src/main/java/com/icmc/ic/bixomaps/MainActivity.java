@@ -5,12 +5,12 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -19,9 +19,12 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -61,7 +64,7 @@ import rx.schedulers.Schedulers;
 public class MainActivity extends AppCompatActivity
         implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener, LocationListener {
+        GoogleApiClient.OnConnectionFailedListener, LocationListener, GoogleMap.OnInfoWindowClickListener {
     public static final String TAG = MainActivity.class.getSimpleName();
     private GoogleMap mMap;
     private GoogleApiClient mGoogleApiClient;
@@ -72,6 +75,7 @@ public class MainActivity extends AppCompatActivity
     private boolean mRequestingLocationUpdates;
     private Map<String, Integer> mMenuList;
     private MainPresenter mPresenter;
+    private MenuAdapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,21 +85,12 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        if (fab != null)
-            fab.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Snackbar.make(view, "É preciso estar logado para adicionar um novo local", Snackbar.LENGTH_LONG)
-                            .setAction("Action", null).show();
-                }
-            });
-
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
+        drawer.openDrawer(GravityCompat.START);
 
         //NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         //navigationView.setNavigationItemSelectedListener(this);
@@ -138,9 +133,8 @@ public class MainActivity extends AppCompatActivity
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.menu_list);
         recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         recyclerView.setHasFixedSize(true);
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        MenuAdapter adapter = new MenuAdapter(this, mMenuList);
-        recyclerView.setAdapter(adapter);
+        mAdapter = new MenuAdapter(this, mMenuList);
+        recyclerView.setAdapter(mAdapter);
     }
 
     protected void onStart() {
@@ -175,7 +169,6 @@ public class MainActivity extends AppCompatActivity
                     mGoogleApiClient);
             if (mLastLocation != null) {
                 updateMap(mLastLocation);
-                getRecommendations(null);
             }
             if (mRequestingLocationUpdates) {
                 startLocationUpdates();
@@ -237,7 +230,6 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        Log.d("onActivityResult()", Integer.toString(resultCode));
         switch (requestCode) {
             case REQUEST_LOCATION:
                 switch (resultCode) {
@@ -265,8 +257,6 @@ public class MainActivity extends AppCompatActivity
             updateMap(location);
 
         mLastLocation = location;
-
-        //mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
     }
 
     @Override
@@ -333,16 +323,6 @@ public class MainActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
-    /*
-    public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
-        //int id = item.getItemId();
-
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
-        return true;
-    }*/
-
     private void updateMap(Location location) {
         mMap.animateCamera(
                 CameraUpdateFactory.newLatLngZoom(
@@ -364,7 +344,37 @@ public class MainActivity extends AppCompatActivity
 
         if(checkPermission()) {
             mMap.setMyLocationEnabled(true);
-            //mMap.getUiSettings().setZoomControlsEnabled(true);
+            mMap.getUiSettings().setZoomControlsEnabled(true);
+            // Supporting MultiLine for the snippet in the info window
+            mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+
+                @Override
+                public View getInfoWindow(Marker arg0) {
+                    return null;
+                }
+
+                @Override
+                public View getInfoContents(Marker marker) {
+
+                    LinearLayout info = new LinearLayout(MainActivity.this);
+                    info.setOrientation(LinearLayout.VERTICAL);
+
+                    TextView title = new TextView(MainActivity.this);
+                    title.setTextColor(Color.BLACK);
+                    title.setGravity(Gravity.CENTER);
+                    title.setTypeface(null, Typeface.BOLD);
+                    title.setText(marker.getTitle());
+
+                    TextView snippet = new TextView(MainActivity.this);
+                    snippet.setTextColor(Color.GRAY);
+                    snippet.setText(marker.getSnippet());
+
+                    info.addView(title);
+                    info.addView(snippet);
+
+                    return info;
+                }
+            });
         }
     }
 
@@ -417,11 +427,13 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    public void getRecommendations(String category) {
-        if (mLastLocation != null) {
-            if (category == null)
-                category = "food_drink";
+    @Override
+    public void onInfoWindowClick(Marker marker) {
 
+    }
+
+    public void getRecommendations(String category, final int position) {
+        if (mLastLocation != null && category != null) {
             mPresenter.getRecommendations(mLastLocation, category).subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Subscriber<ResponseBody>() {
@@ -452,6 +464,7 @@ public class MainActivity extends AppCompatActivity
                                             .position(new LatLng(Double.parseDouble(p.getLat()),
                                                     Double.parseDouble(p.getLong())))
                                             .title(p.getName()));
+                                    marker.setSnippet(p.getAddress());
                                     builder.include(marker.getPosition());
                                 }
                                 // Include user position
@@ -460,6 +473,7 @@ public class MainActivity extends AppCompatActivity
                                 int padding = 100;
                                 CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
                                 mMap.animateCamera(cu);
+                                mAdapter.notifyItemChanged(position);
                                 DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
                                 if (drawer.isDrawerOpen(GravityCompat.START))
                                     drawer.closeDrawer(GravityCompat.START);

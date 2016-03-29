@@ -5,12 +5,12 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.graphics.Typeface;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -18,13 +18,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -38,44 +33,31 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
-import com.google.android.gms.maps.CameraUpdate;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.icmc.ic.bixomaps.models.MessageResponse;
+import com.icmc.ic.bixomaps.fragments.MapFragment;
 import com.icmc.ic.bixomaps.utils.Helper;
 import com.icmc.ic.bixomaps.views.adapters.MenuAdapter;
-
-import org.simpleframework.xml.core.Persister;
 
 import java.util.Map;
 import java.util.TreeMap;
 
-import okhttp3.ResponseBody;
-import rx.Subscriber;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
-
+/**
+ * Handles all interaction with the Google API for using GPS location, permissions
+ * request for using GPS, callbacks, etc. It also has tne navigation drawer menu.
+ *
+ * @author caiolopes
+ */
 public class MainActivity extends AppCompatActivity
-        implements OnMapReadyCallback,
-        GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener, LocationListener, GoogleMap.OnInfoWindowClickListener {
+        implements GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener, LocationListener {
     public static final String TAG = MainActivity.class.getSimpleName();
-    private GoogleMap mMap;
     private GoogleApiClient mGoogleApiClient;
-    private Location mLastLocation;
     private LocationRequest mLocationRequest;
     private static final int REQUEST_ACCESS_FINE_LOCATION = 0;
     private final static int REQUEST_LOCATION = 199;
     private boolean mRequestingLocationUpdates;
-    private Map<String, Integer> mMenuList;
-    private MainPresenter mPresenter;
-    private MenuAdapter mAdapter;
+    public MapFragment mFragment;
+    public Location mLastLocation;
+    public MenuAdapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,25 +74,24 @@ public class MainActivity extends AppCompatActivity
         toggle.syncState();
         drawer.openDrawer(GravityCompat.START);
 
-        //NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        //navigationView.setNavigationItemSelectedListener(this);
-
         requestLocationPermission(this);
-
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
 
         setupLocationServices();
 
         createDrawerMenu();
 
-        mPresenter = new MainPresenter();
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        mFragment = new MapFragment();
+        fragmentTransaction.add(R.id.main_layout, mFragment);
+        fragmentTransaction.commit();
     }
 
+    /**
+     * Creating drawer menu
+     */
     void createDrawerMenu() {
-        mMenuList = new TreeMap<>();
+        Map<String, Integer> mMenuList = new TreeMap<>();
         mMenuList.put(getString(R.string.category_car), R.drawable.ic_menu_restaurant_vector);
         mMenuList.put(getString(R.string.category_bank), R.drawable.ic_menu_restaurant_vector);
         mMenuList.put(getString(R.string.category_education), R.drawable.ic_menu_education_vector);
@@ -164,11 +145,11 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onConnected(Bundle connectionHint) {
-        if (checkPermission()) {
+        if (Helper.checkPermission(this)) {
             mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
                     mGoogleApiClient);
             if (mLastLocation != null) {
-                updateMap(mLastLocation);
+                mFragment.updateMap(mLastLocation);
             }
             if (mRequestingLocationUpdates) {
                 startLocationUpdates();
@@ -253,8 +234,9 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onLocationChanged(Location location) {
-        if (mLastLocation == null)
-            updateMap(location);
+        if (mLastLocation == null) {
+            mFragment.updateMap(location);
+        }
 
         mLastLocation = location;
     }
@@ -270,7 +252,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     protected void startLocationUpdates() {
-        if (checkPermission())
+        if (Helper.checkPermission(this))
             LocationServices.FusedLocationApi.requestLocationUpdates(
                     mGoogleApiClient, mLocationRequest, this);
     }
@@ -323,71 +305,6 @@ public class MainActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
-    private void updateMap(Location location) {
-        mMap.animateCamera(
-                CameraUpdateFactory.newLatLngZoom(
-                        new LatLng(location.getLatitude(), location.getLongitude()), 15f));
-    }
-
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
-
-        if(checkPermission()) {
-            mMap.setMyLocationEnabled(true);
-            mMap.getUiSettings().setZoomControlsEnabled(true);
-            // Supporting MultiLine for the snippet in the info window
-            mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
-
-                @Override
-                public View getInfoWindow(Marker arg0) {
-                    return null;
-                }
-
-                @Override
-                public View getInfoContents(Marker marker) {
-
-                    LinearLayout info = new LinearLayout(MainActivity.this);
-                    info.setOrientation(LinearLayout.VERTICAL);
-
-                    TextView title = new TextView(MainActivity.this);
-                    title.setTextColor(Color.BLACK);
-                    title.setGravity(Gravity.CENTER);
-                    title.setTypeface(null, Typeface.BOLD);
-                    title.setText(marker.getTitle());
-
-                    TextView snippet = new TextView(MainActivity.this);
-                    snippet.setTextColor(Color.GRAY);
-                    snippet.setText(marker.getSnippet());
-
-                    info.addView(title);
-                    info.addView(snippet);
-
-                    return info;
-                }
-            });
-        }
-    }
-
-    private boolean checkPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                return true;
-            }
-            return false;
-        }
-        return true;
-    }
-
     /**
      * Helper method to check if location permission is granted
      * @return if location permission is granted
@@ -410,13 +327,7 @@ public class MainActivity extends AppCompatActivity
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         switch (requestCode) {
             case REQUEST_ACCESS_FINE_LOCATION:
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // Permission Granted
-                    if (checkPermission()) {
-                        if (mMap != null)
-                            mMap.setMyLocationEnabled(true);
-                    }
-                } else {
+                if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                     // Permission Denied
                     Toast.makeText(MainActivity.this, "Location Denied", Toast.LENGTH_SHORT)
                             .show();
@@ -424,62 +335,6 @@ public class MainActivity extends AppCompatActivity
                 break;
             default:
                 super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        }
-    }
-
-    @Override
-    public void onInfoWindowClick(Marker marker) {
-
-    }
-
-    public void getRecommendations(String category, final int position) {
-        if (mLastLocation != null && category != null) {
-            mPresenter.getRecommendations(mLastLocation, category).subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(new Subscriber<ResponseBody>() {
-                        @Override
-                        public void onCompleted() {
-                        }
-
-                        @Override
-                        public void onError(Throwable e) {
-                        }
-
-                        @Override
-                        public void onNext(ResponseBody messageResponse) {
-                            MessageResponse response = null;
-                            try {
-                                String ret = new String(messageResponse.bytes(), "ISO-8859-1");
-                                Persister persister = new Persister();
-                                response = persister.read(MessageResponse.class, ret);
-                            } catch (Exception e) {
-                                Log.e(TAG, "Error reading and converting response", e);
-                            }
-
-                            if (response != null) {
-                                mMap.clear();
-                                LatLngBounds.Builder builder = new LatLngBounds.Builder();
-                                for (MessageResponse.Place p : response.getReply().getRecommendations()) {
-                                    Marker marker = mMap.addMarker(new MarkerOptions()
-                                            .position(new LatLng(Double.parseDouble(p.getLat()),
-                                                    Double.parseDouble(p.getLong())))
-                                            .title(p.getName()));
-                                    marker.setSnippet(p.getAddress());
-                                    builder.include(marker.getPosition());
-                                }
-                                // Include user position
-                                builder.include(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()));
-                                LatLngBounds bounds = builder.build();
-                                int padding = 100;
-                                CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
-                                mMap.animateCamera(cu);
-                                mAdapter.notifyItemChanged(position);
-                                DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-                                if (drawer.isDrawerOpen(GravityCompat.START))
-                                    drawer.closeDrawer(GravityCompat.START);
-                            }
-                        }
-                    });
         }
     }
 }

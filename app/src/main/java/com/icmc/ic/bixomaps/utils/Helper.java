@@ -1,7 +1,10 @@
 package com.icmc.ic.bixomaps.utils;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -31,6 +34,14 @@ public class Helper {
                 Log.i(TAG, "This device is not supported.");
             }
             return false;
+        }
+        return true;
+    }
+
+    public static boolean checkPermission(Activity activity) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            return activity.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                    == PackageManager.PERMISSION_GRANTED;
         }
         return true;
     }

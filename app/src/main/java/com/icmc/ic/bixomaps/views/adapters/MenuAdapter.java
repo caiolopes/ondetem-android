@@ -92,7 +92,7 @@ public class MenuAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                             notifyItemChanged(aux);
                             notifyItemChanged(focusedItem);
                             item.progress.setVisibility(View.VISIBLE);
-                            mContext.getRecommendations(Helper.getCategoryField(item.text.getText().toString(), mContext), position);
+                            mContext.mFragment.getRecommendations(Helper.getCategoryField(item.text.getText().toString(), mContext), position);
                         }
                     });
 

@@ -14,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -45,6 +46,7 @@ import rx.schedulers.Schedulers;
 public class MapFragment extends Fragment implements OnMapReadyCallback, GoogleMap.OnInfoWindowClickListener {
     public static final String TAG = MapFragment.class.getSimpleName();
     private View mView;
+    private PopupWindow mPopupWindow;
     private GoogleMap mMap;
     private MainPresenter mPresenter;
 
@@ -83,6 +85,18 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, GoogleM
         if(Helper.checkPermission(getActivity())) {
             mMap.setMyLocationEnabled(true);
             mMap.getUiSettings().setZoomControlsEnabled(true);
+
+            mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+                @Override
+                public void onMapClick(LatLng latLng) {
+                    if (mPopupWindow != null) {
+                        if (mPopupWindow.isShowing()) {
+                            mPopupWindow.dismiss();
+                        }
+                    }
+                }
+            });
+
             // Set a listener for info window events.
             mMap.setOnInfoWindowClickListener(this);
             // Supporting MultiLine for the snippet in the info window
@@ -183,6 +197,20 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, GoogleM
 
     @Override
     public void onInfoWindowClick(Marker marker) {
+        View popupView = getLayoutInflater(null).inflate(R.layout.popup_window_info, null);
 
+        if (mPopupWindow != null) {
+            if (mPopupWindow.isShowing()) {
+                mPopupWindow.dismiss();
+            } else {
+                mPopupWindow = new PopupWindow(popupView, LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT);
+                mPopupWindow.showAtLocation(popupView, Gravity.BOTTOM, 10, 10);
+            }
+        } else {
+            mPopupWindow = new PopupWindow(popupView, LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            mPopupWindow.showAtLocation(popupView, Gravity.BOTTOM, 10, 10);
+        }
     }
 }

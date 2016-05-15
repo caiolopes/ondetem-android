@@ -6,8 +6,6 @@ import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -26,7 +24,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.icmc.ic.bixomaps.MainActivity;
+import com.icmc.ic.bixomaps.AppBaseActivity;
 import com.icmc.ic.bixomaps.MainPresenter;
 import com.icmc.ic.bixomaps.R;
 import com.icmc.ic.bixomaps.models.MessageResponse;
@@ -45,20 +43,37 @@ import rx.schedulers.Schedulers;
  */
 public class MapFragment extends Fragment implements OnMapReadyCallback, GoogleMap.OnInfoWindowClickListener {
     public static final String TAG = MapFragment.class.getSimpleName();
-    private View mView;
     private PopupWindow mPopupWindow;
     private GoogleMap mMap;
     private MainPresenter mPresenter;
+    private String mCategory;
+
+    public static MapFragment newInstance(String category) {
+
+        Bundle args = new Bundle();
+        args.putString("CATEGORY", category);
+
+        MapFragment fragment = new MapFragment();
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        mCategory = getArguments().getString("CATEGORY");
+    }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        mView = inflater.inflate(R.layout.fragment_main, container, false);
-        return mView;
+        return inflater.inflate(R.layout.fragment_map, container, false);
     }
 
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager()
                 .findFragmentById(R.id.map);
@@ -66,7 +81,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, GoogleM
 
         mPresenter = new MainPresenter();
 
-        super.onViewCreated(view, savedInstanceState);
+        Log.d(TAG, mCategory);
+
+        getRecommendations(mCategory);
     }
 
     /**
@@ -135,10 +152,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, GoogleM
     /**
      * Method that interacts with the presenter which calls the API to get the recommendations.
      * @param category category name
-     * @param position position in the drawer menu
      */
-    public void getRecommendations(String category, final int position) {
-        final Location mLastLocation = ((MainActivity)getActivity()).mLastLocation;
+    public void getRecommendations(String category) {
+        final Location mLastLocation = AppBaseActivity.mLastLocation;
+
         if (mLastLocation != null && category != null) {
             mPresenter.getRecommendations(mLastLocation, category).subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
@@ -179,10 +196,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, GoogleM
                                 int padding = 100;
                                 CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
                                 mMap.animateCamera(cu);
-                                ((MainActivity) getActivity()).mAdapter.notifyItemChanged(position);
-                                DrawerLayout drawer = (DrawerLayout) getActivity().findViewById(R.id.drawer_layout);
-                                if (drawer.isDrawerOpen(GravityCompat.START))
-                                    drawer.closeDrawer(GravityCompat.START);
                             }
                         }
                     });

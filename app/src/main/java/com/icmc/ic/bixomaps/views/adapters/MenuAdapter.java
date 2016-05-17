@@ -2,7 +2,6 @@ package com.icmc.ic.bixomaps.views.adapters;
 
 import android.content.Intent;
 import android.graphics.Color;
-import android.support.v7.app.ActionBar;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,7 +10,7 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.icmc.ic.bixomaps.CategoryActivity;
+import com.icmc.ic.bixomaps.PlaceActivity;
 import com.icmc.ic.bixomaps.MainActivity;
 import com.icmc.ic.bixomaps.R;
 import com.icmc.ic.bixomaps.utils.Helper;
@@ -97,7 +96,7 @@ public class MenuAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                             item.progress.setVisibility(View.VISIBLE);
 
                             String category = Helper.getCategoryField(item.text.getText().toString(), mContext);
-                            Intent intent = new Intent(mContext, CategoryActivity.class);
+                            Intent intent = new Intent(mContext, PlaceActivity.class);
                             intent.putExtra("CATEGORY", category);
                             intent.putExtra("TITLE", item.text.getText().toString());
                             mContext.startActivity(intent);

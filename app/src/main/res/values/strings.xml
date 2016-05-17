@@ -34,4 +34,10 @@
     <string name="add_dialog_name">Nome</string>
     <string name="action_settings">Opções</string>
     <string name="title_activity_maps">Map</string>
+
+    <!-- Tabs -->
+    <string name="map_tab">Mapa</string>
+    <string name="list_tab">Lista</string>
+
+    <string name="distance_km">%1$.2f km</string>
 ***REMOVED***

@@ -33,6 +33,7 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.icmc.ic.bixomaps.utils.Helper;
+import com.icmc.ic.bixomaps.views.Dialogs;
 
 /**
  * Handles all interaction with the Google API for using GPS location, permissions
@@ -237,7 +238,7 @@ public abstract class AppBaseActivity extends AppCompatActivity
             case R.id.action_settings:
                 return true;
             case R.id.action_add:
-                MainPresenter.addDialog(this);
+                Dialogs.add(this);
                 return true;
             case android.R.id.home:
                 NavUtils.navigateUpFromSameTask(this);
@@ -274,7 +275,7 @@ public abstract class AppBaseActivity extends AppCompatActivity
                     Toast.makeText(AppBaseActivity.this, "Location Denied", Toast.LENGTH_SHORT)
                             .show();
                 } else {
-                    Log.v(TAG, "Permission granted!!");
+                    Log.d(TAG, "Permission granted!!");
                     startLocationUpdates();
                 }
                 break;

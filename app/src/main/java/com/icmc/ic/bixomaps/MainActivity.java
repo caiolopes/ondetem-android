@@ -52,6 +52,7 @@ public class MainActivity extends AppBaseActivity {
         mCategoryMenu.put(getString(R.string.category_administrative), R.drawable.ic_menu_restaurant_vector);
         mCategoryMenu.put(getString(R.string.category_animal), R.drawable.ic_menu_restaurant_vector);
 
+
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.menu_list);
         assert recyclerView != null;
         recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));

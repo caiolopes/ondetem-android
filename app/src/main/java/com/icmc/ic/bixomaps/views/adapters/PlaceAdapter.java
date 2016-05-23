@@ -7,7 +7,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.icmc.ic.bixomaps.R;
 import com.icmc.ic.bixomaps.fragments.OnPlaceSelectedListener;
@@ -71,7 +70,6 @@ public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.ViewHolder> 
         holder.setItemClickListener(new ItemClickListener() {
             @Override
             public void onClick(View view, int position, boolean isLongClick) {
-                Toast.makeText(mContext, "Clicou " + position, Toast.LENGTH_LONG).show();
                 if (mContext instanceof OnPlaceSelectedListener) {
                     ((OnPlaceSelectedListener)mContext).onPlaceSelected(position);
                 }

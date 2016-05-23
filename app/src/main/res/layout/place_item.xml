@@ -14,7 +14,9 @@
         android:textAppearance="?android:attr/textAppearanceListItemSmall"
         android:gravity="center_vertical"
         android:paddingStart="?android:attr/listPreferredItemPaddingStart"
+        android:paddingLeft="4dp"
         android:paddingEnd="?android:attr/listPreferredItemPaddingEnd"
+        android:paddingRight="4dp"
         android:minHeight="?android:attr/listPreferredItemHeightSmall" />
 
     <TextView
@@ -24,6 +26,8 @@
         android:textAppearance="?android:attr/textAppearanceListItemSmall"
         android:gravity="center_vertical"
         android:paddingStart="?android:attr/listPreferredItemPaddingStart"
+        android:paddingLeft="4dp"
         android:paddingEnd="?android:attr/listPreferredItemPaddingEnd"
+        android:paddingRight="4dp"
         android:minHeight="?android:attr/listPreferredItemHeightSmall" />
 </LinearLayout>

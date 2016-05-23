@@ -4,6 +4,7 @@ import org.simpleframework.xml.Attribute;
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.ElementList;
 import org.simpleframework.xml.Root;
+import org.simpleframework.xml.Text;
 
 import java.util.List;
 
@@ -88,7 +89,22 @@ public class MessageResponse {
         public String getPhone() { return this.phone; }
         public void setPhone(String _value) { this.phone = _value; }
 
-        public String getRating() { return this.rating; }
+        public Float getRating() {
+		    /*  Place rating should consider the average of the ratings in the
+		     *  reviews, and consider the overall rating when there are no reviews */
+            float counter = 0.0f;
+            int divBy = 0;
+            if (reviews != null) {
+                for (Reviews r : reviews) {
+                    counter += Float.parseFloat(r.overall_rating);
+                    divBy++;
+                }
+            }
+            if (divBy != 0)
+                return counter/divBy;
+            else
+                return Float.parseFloat(rating);
+        }
         public void setRating(String _value) { this.rating = _value; }
 
         public String getUrl() { return this.url; }
@@ -114,6 +130,9 @@ public class MessageResponse {
         @Attribute(name="time", required = false)
         String time;
 
+        @Text(required = false)
+        String review;
+
         public String getId() { return this.id; }
         public void setId(String _value) { this.id = _value; }
 
@@ -125,5 +144,8 @@ public class MessageResponse {
 
         public String getTime() { return this.time; }
         public void setTime(String _value) { this.time = _value; }
+
+        public String getText() { return this.review; }
+        public void setText(String _value) { this.review = _value; }
     }
 }

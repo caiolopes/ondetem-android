@@ -5,6 +5,11 @@ import android.os.Build;
 
 import com.icmc.ic.bixomaps.models.MessageRequest;
 
+import org.simpleframework.xml.Serializer;
+import org.simpleframework.xml.core.Persister;
+
+import java.io.StringWriter;
+import java.io.Writer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -32,6 +37,13 @@ public class Api {
         recommend.setPlace(place);
         recommend.setUser(user);
         request.setRecommend(recommend);
+        Serializer serializer = new Persister();
+        Writer writer = new StringWriter();
+        try {
+            serializer.write(request, writer);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return client.getRecommendations(request);
     }
 }

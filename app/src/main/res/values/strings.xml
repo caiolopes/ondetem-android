@@ -28,16 +28,24 @@
     <string name="category_notary">Tabelião e Correios</string>
 
     <string name="action_add">Adicionar</string>
+    <string name="action_send">Enviar</string>
+    <string name="action_check">Check-in</string>
     <string name="action_cancel">Cancelar</string>
 
     <string name="add_dialog_title">Adicionar novo ponto</string>
     <string name="add_dialog_name">Nome</string>
+    <string name="dialog_review_title">Avalie esse local:</string>
+    <string name="dialog_comment">Comentário</string>
     <string name="action_settings">Opções</string>
     <string name="title_activity_maps">Map</string>
 
     <!-- Tabs -->
     <string name="map_tab">Mapa</string>
     <string name="list_tab">Lista</string>
+
+    <!-- Errors -->
+    <string name="no_places">Sem lugares disponíveis</string>
+    <string name="no_reviews">Sem avaliações, seja o primeiro!</string>
 
     <string name="distance_km">%1$.2f km</string>
 ***REMOVED***

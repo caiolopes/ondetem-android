@@ -3,12 +3,14 @@ package com.icmc.ic.bixomaps.fragments;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.AppBarLayout;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.icmc.ic.bixomaps.AppBaseActivity;
 import com.icmc.ic.bixomaps.R;
@@ -23,6 +25,7 @@ public class PlacesListFragment extends Fragment {
     private View mView;
     private PlaceAdapter mAdapter;
     private OnPlaceSelectedListener mCallback;
+    private boolean mError;
 
     public static PlacesListFragment newInstance() {
 
@@ -31,6 +34,10 @@ public class PlacesListFragment extends Fragment {
         PlacesListFragment fragment = new PlacesListFragment();
         fragment.setArguments(args);
         return fragment;
+    }
+
+    public void setError(boolean error) {
+        mError = error;
     }
 
     @Nullable
@@ -50,11 +57,31 @@ public class PlacesListFragment extends Fragment {
         recyclerView.setHasFixedSize(true);
         mAdapter = new PlaceAdapter(getActivity(), mCallback.getPlaces(), AppBaseActivity.mLastLocation);
         recyclerView.setAdapter(mAdapter);
+        refresh();
+    }
 
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (isVisibleToUser) {
+            if (getActivity().findViewById(android.R.id.content).getParent() instanceof View) {
+                View v = (View) getActivity().findViewById(android.R.id.content).getParent();
+                AppBarLayout appBarLayout = (AppBarLayout) v.findViewById(R.id.app_bar);
+                if (appBarLayout != null) {
+                    appBarLayout.setExpanded(true, true);
+                }
+            }
+        }
     }
 
     public void refresh() {
-        mAdapter.notifyDataSetChanged();
+        TextView noPlacesErrorMsg = (TextView) mView.findViewById(R.id.no_places_message);
+        if (mError) {
+            noPlacesErrorMsg.setVisibility(View.VISIBLE);
+        } else {
+            noPlacesErrorMsg.setVisibility(View.GONE);
+            mAdapter.notifyDataSetChanged();
+        }
     }
 
     @Override

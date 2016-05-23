@@ -7,12 +7,15 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 
 import com.icmc.ic.bixomaps.fragments.OnPlaceSelectedListener;
 import com.icmc.ic.bixomaps.fragments.PagerFragment;
 import com.icmc.ic.bixomaps.fragments.PlaceFragment;
 import com.icmc.ic.bixomaps.models.MessageResponse;
 import com.icmc.ic.bixomaps.network.Api;
+import com.icmc.ic.bixomaps.views.Dialogs;
 
 import org.simpleframework.xml.core.Persister;
 
@@ -57,25 +60,45 @@ public class PlaceActivity extends AppBaseActivity implements OnPlaceSelectedLis
 
             // In case this activity was started with special instructions from an
             // Intent, pass the Intent's extras to the fragment as arguments
-            //mPagerFragment.setArguments(getIntent().getExtras());
+            mPagerFragment.setArguments(getIntent().getExtras());
 
             // Add the fragment to the 'fragment_container' FrameLayout
-            getSupportFragmentManager().beginTransaction()
-                    .add(R.id.fragment_container, mPagerFragment).commit();
-        }
+            FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
 
-        if (getIntent().hasExtra("TITLE")) {
-            ActionBar actionBar = getSupportActionBar();
-            if (actionBar != null) {
-                actionBar.setTitle(getIntent().getStringExtra("TITLE"));
-                actionBar.setDisplayHomeAsUpEnabled(true);
-                actionBar.setHomeButtonEnabled(true);
-            }
+            ft.add(R.id.fragment_container, mPagerFragment).commit();
         }
 
         if (getIntent().hasExtra("CATEGORY")) {
             String category = getIntent().getStringExtra("CATEGORY");
             getRecommendations(category);
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        switch (id) {
+            case R.id.action_settings:
+                return true;
+            case R.id.action_add:
+                Dialogs.addPlace(this);
+                return true;
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
     }
 
@@ -102,6 +125,7 @@ public class PlaceActivity extends AppBaseActivity implements OnPlaceSelectedLis
 
                         @Override
                         public void onError(Throwable e) {
+                            mPagerFragment.setError(true);
                         }
 
                         @Override
@@ -117,10 +141,13 @@ public class PlaceActivity extends AppBaseActivity implements OnPlaceSelectedLis
 
                             if (response != null) {
                                 mPlaces.addAll(response.getReply().getRecommendations());
+                                mPagerFragment.setError(false);
                                 mPagerFragment.refresh();
                             }
                         }
                     });
+        } else {
+            mPagerFragment.setError(true);
         }
     }
 
@@ -135,15 +162,26 @@ public class PlaceActivity extends AppBaseActivity implements OnPlaceSelectedLis
 
         // Create new fragment and transaction
         Fragment newFragment = new PlaceFragment();
-        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        ft.setCustomAnimations(android.R.anim.slide_in_left, android.R.anim.slide_out_right,
+                android.R.anim.slide_in_left, android.R.anim.slide_out_right);
         // Replace whatever is in the fragment_container view with this fragment,
         // and add the transaction to the back stack if needed
-        transaction.replace(R.id.fragment_container, newFragment);
-        transaction.addToBackStack(null);
+        ft.replace(R.id.fragment_container, newFragment);
+        ft.addToBackStack(null);
 
         // Commit the transaction
-        transaction.commit();
+        ft.commit();
+    }
+
+    @Override
+    public void setTitle(String title) {
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setTitle(title);
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setHomeButtonEnabled(true);
+        }
     }
 
     @Override

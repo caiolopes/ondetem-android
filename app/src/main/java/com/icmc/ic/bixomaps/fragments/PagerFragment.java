@@ -1,5 +1,6 @@
 package com.icmc.ic.bixomaps.fragments;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.TabLayout;
@@ -23,6 +24,23 @@ public class PagerFragment extends Fragment {
     private ViewPager mViewPager;
     private PlacesMapFragment mPlacesMapFragment;
     private PlacesListFragment mPlacesListFragment;
+    private String mTitle;
+    private OnPlaceSelectedListener mCallback;
+    private boolean mError = false;
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+
+        // This makes sure that the container activity has implemented
+        // the callback interface. If not, it throws an exception
+        try {
+            mCallback = (OnPlaceSelectedListener) context;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(context.toString()
+                    + " must implement OnPlaceSelectedListener");
+        }
+    }
 
     @Nullable
     @Override
@@ -32,8 +50,21 @@ public class PagerFragment extends Fragment {
     }
 
     @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        mTitle = getArguments().getString("TITLE");
+    }
+
+    public void setError(boolean error) {
+        mError = error;
+    }
+
+    @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        mCallback.setTitle(mTitle);
 
         // Setup View Pager
         assert mViewPager != null;
@@ -43,8 +74,11 @@ public class PagerFragment extends Fragment {
         TabLayout tabLayout = (TabLayout) mView.findViewById(R.id.tabs);
         assert tabLayout != null;
         tabLayout.setupWithViewPager(mViewPager);
+
         mPlacesMapFragment = PlacesMapFragment.newInstance();
         mPlacesListFragment = PlacesListFragment.newInstance();
+
+        mPlacesListFragment.setError(mError);
     }
 
     public void refresh() {

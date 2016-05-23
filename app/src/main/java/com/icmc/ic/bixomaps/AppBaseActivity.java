@@ -9,13 +9,9 @@ import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -33,7 +29,6 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.icmc.ic.bixomaps.utils.Helper;
-import com.icmc.ic.bixomaps.views.Dialogs;
 
 /**
  * Handles all interaction with the Google API for using GPS location, permissions
@@ -220,34 +215,6 @@ public abstract class AppBaseActivity extends AppCompatActivity
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        switch (id) {
-            case R.id.action_settings:
-                return true;
-            case R.id.action_add:
-                Dialogs.add(this);
-                return true;
-            case android.R.id.home:
-                NavUtils.navigateUpFromSameTask(this);
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
-    }
-
     /**
      * Helper method to check if location permission is granted
      * @return if location permission is granted
@@ -275,7 +242,6 @@ public abstract class AppBaseActivity extends AppCompatActivity
                     Toast.makeText(AppBaseActivity.this, "Location Denied", Toast.LENGTH_SHORT)
                             .show();
                 } else {
-                    Log.d(TAG, "Permission granted!!");
                     startLocationUpdates();
                 }
                 break;

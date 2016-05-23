@@ -12,4 +12,5 @@ public interface OnPlaceSelectedListener {
     List<MessageResponse.Place> getPlaces();
     MessageResponse.Place getPlace();
     void onPlaceSelected(int position);
+    void setTitle(String title);
 }

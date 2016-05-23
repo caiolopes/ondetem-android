@@ -6,6 +6,7 @@ import android.graphics.Typeface;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.AppBarLayout;
 import android.support.v4.app.Fragment;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -28,6 +29,9 @@ import com.icmc.ic.bixomaps.R;
 import com.icmc.ic.bixomaps.models.MessageResponse;
 import com.icmc.ic.bixomaps.utils.Helper;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Handles the Google Map visualization, callbacks, etc.
  * @author caiolopes
@@ -36,6 +40,7 @@ public class PlacesMapFragment extends Fragment implements OnMapReadyCallback {
     public static final String TAG = PlacesMapFragment.class.getSimpleName();
     private OnPlaceSelectedListener mCallback;
     private GoogleMap mMap;
+    private Map<Marker, Integer> mMarkerMap;
 
     public static PlacesMapFragment newInstance() {
 
@@ -44,6 +49,20 @@ public class PlacesMapFragment extends Fragment implements OnMapReadyCallback {
         PlacesMapFragment fragment = new PlacesMapFragment();
         fragment.setArguments(args);
         return fragment;
+    }
+
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (isVisibleToUser) {
+            if (getActivity().findViewById(android.R.id.content).getParent() instanceof View) {
+                View v = (View) getActivity().findViewById(android.R.id.content).getParent();
+                AppBarLayout appBarLayout = (AppBarLayout) v.findViewById(R.id.app_bar);
+                if (appBarLayout != null) {
+                    appBarLayout.setExpanded(false, true);
+                }
+            }
+        }
     }
 
     @Nullable
@@ -84,7 +103,7 @@ public class PlacesMapFragment extends Fragment implements OnMapReadyCallback {
             mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
                 @Override
                 public void onInfoWindowClick(Marker marker) {
-
+                    mCallback.onPlaceSelected(mMarkerMap.get(marker));
                 }
             });
             // Supporting MultiLine for the snippet in the info window
@@ -137,22 +156,28 @@ public class PlacesMapFragment extends Fragment implements OnMapReadyCallback {
     public void refresh() {
         final Location mLastLocation = AppBaseActivity.mLastLocation;
 
-        mMap.clear();
-        LatLngBounds.Builder builder = new LatLngBounds.Builder();
-        for (MessageResponse.Place p : mCallback.getPlaces()) {
-            Marker marker = mMap.addMarker(new MarkerOptions()
-                    .position(new LatLng(Double.parseDouble(p.getLat()),
-                            Double.parseDouble(p.getLong())))
-                    .title(p.getName()));
-            marker.setSnippet(p.getAddress());
-            builder.include(marker.getPosition());
+        if (mLastLocation != null) {
+            mMap.clear();
+            mMarkerMap = new HashMap<>();
+            int i = 0;
+            LatLngBounds.Builder builder = new LatLngBounds.Builder();
+            for (MessageResponse.Place p : mCallback.getPlaces()) {
+                Marker marker = mMap.addMarker(new MarkerOptions()
+                        .position(new LatLng(Double.parseDouble(p.getLat()),
+                                Double.parseDouble(p.getLong())))
+                        .title(p.getName()));
+                marker.setSnippet(p.getAddress());
+                builder.include(marker.getPosition());
+                mMarkerMap.put(marker, i);
+                i++;
+            }
+            // Include user position
+            builder.include(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()));
+            LatLngBounds bounds = builder.build();
+            int padding = 100;
+            CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+            mMap.moveCamera(cu);
         }
-        // Include user position
-        builder.include(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()));
-        LatLngBounds bounds = builder.build();
-        int padding = 100;
-        CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
-        mMap.animateCamera(cu);
     }
 
     public void updateMap(Location location) {

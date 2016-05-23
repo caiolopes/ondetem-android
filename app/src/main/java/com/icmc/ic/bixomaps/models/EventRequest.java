@@ -38,6 +38,11 @@ public class EventRequest {
     }
 
     public static class Event {
+        public static String CHECK_IN = "check-in";
+        public static String REVIEW = "review";
+        public static String CLICK = "click";
+        public static String DIRECTION = "direction";
+
         @Attribute(name="type", required = false)
         String type;
 
@@ -67,8 +72,8 @@ public class EventRequest {
         public String getLat() { return this.lat; }
         public void setLat(String _value) { this.lat = _value; }
 
-        public String getLong() { return this.lng; }
-        public void setLong(String _value) { this.lng = _value; }
+        public String setLng() { return this.lng; }
+        public void setLng(String _value) { this.lng = _value; }
     }
 
     public static class Place {

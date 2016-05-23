@@ -39,6 +39,8 @@
     <string name="action_settings">Opções</string>
     <string name="title_activity_maps">Map</string>
 
+    <string name="review_sent">Análise enviada!</string>
+
     <!-- Tabs -->
     <string name="map_tab">Mapa</string>
     <string name="list_tab">Lista</string>

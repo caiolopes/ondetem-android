@@ -11,6 +11,12 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.icmc.ic.bixomaps.R;
 
+import org.simpleframework.xml.Serializer;
+import org.simpleframework.xml.core.Persister;
+
+import java.io.StringWriter;
+import java.io.Writer;
+
 /** Helper class with useful methods that can be used in different classes
  * @author caiolopes
  */
@@ -73,5 +79,17 @@ public class Helper {
         else if(entry.equalsIgnoreCase(context.getString(R.string.category_animal))) entry = "animal_care";
         else if(entry.equalsIgnoreCase(context.getString(R.string.category_notary))) entry = "notary_courier";
         return entry;
+    }
+
+    public static String printXML(Object obj) {
+        Serializer serializer = new Persister();
+        Writer writer = new StringWriter();
+        try {
+            serializer.write(obj, writer);
+            return writer.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

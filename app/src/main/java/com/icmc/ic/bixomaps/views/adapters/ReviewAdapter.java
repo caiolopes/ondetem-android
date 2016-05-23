@@ -42,7 +42,6 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewHold
     public void onBindViewHolder(ReviewHolder holder, int position) {
         MessageResponse.Reviews review = reviews.get(position);
         holder.reviewText.setText(review.getText());
-
         Calendar time = Calendar.getInstance();
         try {
             time.setTimeInMillis(Long.parseLong(review.getTime()) * 1000L);

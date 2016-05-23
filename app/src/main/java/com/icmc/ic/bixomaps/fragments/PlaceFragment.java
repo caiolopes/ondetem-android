@@ -1,7 +1,6 @@
 package com.icmc.ic.bixomaps.fragments;
 
 import android.content.Context;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
@@ -9,7 +8,6 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -18,14 +16,25 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RatingBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.icmc.ic.bixomaps.AppBaseActivity;
 import com.icmc.ic.bixomaps.R;
+import com.icmc.ic.bixomaps.models.EventRequest;
 import com.icmc.ic.bixomaps.models.MessageResponse;
+import com.icmc.ic.bixomaps.network.Api;
 import com.icmc.ic.bixomaps.views.Dialogs;
 import com.icmc.ic.bixomaps.views.adapters.ReviewAdapter;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+
+import okhttp3.ResponseBody;
+import retrofit2.Response;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
+import rx.schedulers.Schedulers;
 
 /**
  * Place Info Fragment
@@ -35,6 +44,8 @@ public class PlaceFragment extends Fragment {
     private View mView;
     private OnPlaceSelectedListener mCallback;
     private RatingBar mRatingBar;
+    private ReviewAdapter mAdapter;
+    private List<MessageResponse.Reviews> mReviews;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -100,16 +111,16 @@ public class PlaceFragment extends Fragment {
 
         RecyclerView recyclerView = (RecyclerView) mView.findViewById(R.id.reviews_list);
         assert recyclerView != null;
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false));
-        List<MessageResponse.Reviews> reviews = new ArrayList<>();
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, true));
+        mReviews = new ArrayList<>();
         if (mCallback.getPlace().getReviews() != null) {
-            reviews.addAll(mCallback.getPlace().getReviews());
+            mReviews.addAll(mCallback.getPlace().getReviews());
         } else {
             TextView noReviewsMsg = (TextView) mView.findViewById(R.id.no_reviews);
             noReviewsMsg.setVisibility(View.VISIBLE);
         }
-        ReviewAdapter adapter = new ReviewAdapter(reviews);
-        recyclerView.setAdapter(adapter);
+        mAdapter = new ReviewAdapter(mReviews);
+        recyclerView.setAdapter(mAdapter);
 
         String name = mCallback.getPlace().getName();
         String address = mCallback.getPlace().getAddress();
@@ -138,7 +149,27 @@ public class PlaceFragment extends Fragment {
     }
 
     public void sendReview(String comment, float rating) {
-
+        Api presenter = new Api();
+        final MessageResponse.Reviews review = new MessageResponse.Reviews();
+        review.setTime(String.valueOf(new Date().getTime()/1000L));
+        review.setText(comment);
+        review.setOverall_rating(String.valueOf(rating));
+        presenter.sendEvent(mCallback.getPlace().getId(),
+                mCallback.getPlace().getCategory(),
+                EventRequest.Event.REVIEW,
+                rating,
+                comment,
+                AppBaseActivity.mLastLocation.getLatitude(),
+                AppBaseActivity.mLastLocation.getLongitude()).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action1<Response<ResponseBody>>() {
+                    @Override
+                    public void call(Response<ResponseBody> response) {
+                        Toast.makeText(getContext(), getString(R.string.review_sent), Toast.LENGTH_LONG)
+                                .show();
+                        mReviews.add(review);
+                        mAdapter.notifyItemInserted(mReviews.size()-1);
+                    }
+                });
     }
 
     public void setRatingBarListener() {

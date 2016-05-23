@@ -5,11 +5,13 @@
     <item
         android:id="@+id/action_check"
         android:title="@string/action_check"
+        android:orderInCategory="1"
         app:showAsAction="ifRoom"
         android:icon="@drawable/ic_beenhere_24dp" />
 
     <item
         android:id="@+id/action_directions"
+        android:orderInCategory="2"
         android:title="@string/action_directions"
         app:showAsAction="ifRoom"
         android:icon="@drawable/ic_directions_24dp" />

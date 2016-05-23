@@ -276,7 +276,7 @@ public class PlaceFragment extends Fragment implements OnMapReadyCallback {
             builder.include(new LatLng(AppBaseActivity.mLastLocation.getLatitude(),
                     AppBaseActivity.mLastLocation.getLongitude()));
             LatLngBounds bounds = builder.build();
-            int padding = 100;
+            int padding = 50;
             CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
             mMap.moveCamera(cu);
         }

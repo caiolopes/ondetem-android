@@ -65,7 +65,7 @@ public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.ViewHolder> 
         location.setLatitude(Double.parseDouble(place.getLat()));
         location.setLongitude(Double.parseDouble(place.getLong()));
         holder.name.setText(place.getName());
-        holder.distance.setText(mContext.getString(R.string.distance_km, mLocation.distanceTo(location)/1000));
+        holder.distance.setText(mContext.getString(R.string.distance_m, mLocation.distanceTo(location)));
 
         holder.setItemClickListener(new ItemClickListener() {
             @Override

@@ -1,6 +1,9 @@
 package com.icmc.ic.bixomaps.fragments;
 
 import android.content.Context;
+import android.content.Intent;
+import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
@@ -18,17 +21,28 @@ import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.icmc.ic.bixomaps.AppBaseActivity;
 import com.icmc.ic.bixomaps.R;
 import com.icmc.ic.bixomaps.models.EventRequest;
 import com.icmc.ic.bixomaps.models.MessageResponse;
 import com.icmc.ic.bixomaps.network.Api;
+import com.icmc.ic.bixomaps.utils.Helper;
 import com.icmc.ic.bixomaps.views.Dialogs;
 import com.icmc.ic.bixomaps.views.adapters.ReviewAdapter;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import okhttp3.ResponseBody;
 import retrofit2.Response;
@@ -40,12 +54,13 @@ import rx.schedulers.Schedulers;
  * Place Info Fragment
  * Created by caiolopes on 5/17/16.
  */
-public class PlaceFragment extends Fragment {
+public class PlaceFragment extends Fragment implements OnMapReadyCallback {
     private View mView;
     private OnPlaceSelectedListener mCallback;
     private RatingBar mRatingBar;
     private ReviewAdapter mAdapter;
     private List<MessageResponse.Reviews> mReviews;
+    private GoogleMap mMap;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -57,6 +72,12 @@ public class PlaceFragment extends Fragment {
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
         inflater.inflate(R.menu.place, menu);
+        Location location = new Location("place");
+        location.setLatitude(Double.parseDouble(mCallback.getPlace().getLat()));
+        location.setLongitude(Double.parseDouble(mCallback.getPlace().getLong()));
+        if (AppBaseActivity.mLastLocation.distanceTo(location) > 50) {
+            menu.removeItem(R.id.action_check);
+        }
     }
 
     @Override
@@ -68,10 +89,68 @@ public class PlaceFragment extends Fragment {
 
         switch (id) {
             case R.id.action_check:
+                checkIn();
+                return true;
+            case R.id.action_directions:
+                routeEvent();
+                Intent intent = new Intent(android.content.Intent.ACTION_VIEW,
+                        Uri.parse("http://maps.google.com/maps?saddr="+AppBaseActivity.mLastLocation.getLatitude()+","
+                                +AppBaseActivity.mLastLocation.getLongitude()
+                                +"&daddr="+mCallback.getPlace().getLat()
+                                +","+mCallback.getPlace().getLong()));
+                startActivity(intent);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    void checkIn() {
+        Api presenter = new Api();
+        presenter.sendEvent(mCallback.getPlace().getId(),
+                mCallback.getPlace().getCategory(),
+                EventRequest.Event.CHECK_IN,
+                null,
+                null,
+                AppBaseActivity.mLastLocation.getLatitude(),
+                AppBaseActivity.mLastLocation.getLongitude())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action1<Response<ResponseBody>>() {
+                    @Override
+                    public void call(Response<ResponseBody> response) {
+                        Toast.makeText(getContext(), getString(R.string.check_in_sent), Toast.LENGTH_LONG)
+                                .show();
+                    }
+                });
+    }
+
+    private void clickEvent() {
+        Api presenter = new Api();
+        presenter.sendEvent(mCallback.getPlace().getId(),
+                mCallback.getPlace().getCategory(),
+                EventRequest.Event.CLICK,
+                null,
+                null,
+                AppBaseActivity.mLastLocation.getLatitude(),
+                AppBaseActivity.mLastLocation.getLongitude())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe();
+    }
+
+    private void routeEvent() {
+        Api presenter = new Api();
+        presenter.sendEvent(mCallback.getPlace().getId(),
+                mCallback.getPlace().getCategory(),
+                EventRequest.Event.DIRECTION,
+                null,
+                null,
+                AppBaseActivity.mLastLocation.getLatitude(),
+                AppBaseActivity.mLastLocation.getLongitude())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe();
     }
 
     @Nullable
@@ -137,7 +216,7 @@ public class PlaceFragment extends Fragment {
         if (website != null)
             if (!website.isEmpty())
                 placeInfo = placeInfo.concat("<p><b>Website:</b> " + website + "</p>");
-        placeInfo = placeInfo.concat("<b>Nota:</b> " + rating);
+        placeInfo = placeInfo.concat("<b>Nota geral:</b> " + String.format(Locale.getDefault(), "%.02f", rating));
 
         TextView placeInfotextView = (TextView) mView.findViewById(R.id.place_info);
         assert placeInfotextView != null;
@@ -146,6 +225,12 @@ public class PlaceFragment extends Fragment {
         ratingBar.setRating(rating);
         mRatingBar = (RatingBar) mView.findViewById(R.id.rate_place);
         setRatingBarListener();
+        clickEvent();
+
+        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+        SupportMapFragment mapFragment = SupportMapFragment.newInstance();
+        getChildFragmentManager().beginTransaction().replace(R.id.map_place, mapFragment).commit();
+        mapFragment.getMapAsync(this);
     }
 
     public void sendReview(String comment, float rating) {
@@ -160,7 +245,9 @@ public class PlaceFragment extends Fragment {
                 rating,
                 comment,
                 AppBaseActivity.mLastLocation.getLatitude(),
-                AppBaseActivity.mLastLocation.getLongitude()).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread())
+                AppBaseActivity.mLastLocation.getLongitude())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Action1<Response<ResponseBody>>() {
                     @Override
                     public void call(Response<ResponseBody> response) {
@@ -170,6 +257,29 @@ public class PlaceFragment extends Fragment {
                         mAdapter.notifyItemInserted(mReviews.size()-1);
                     }
                 });
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+
+        if(Helper.checkPermission(getActivity())) {
+            mMap.setMyLocationEnabled(true);
+            mMap.getUiSettings().setZoomControlsEnabled(true);
+            Marker marker = mMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(Double.parseDouble(mCallback.getPlace().getLat()),
+                            Double.parseDouble(mCallback.getPlace().getLong())))
+                    .title(mCallback.getPlace().getName()));
+
+            LatLngBounds.Builder builder = new LatLngBounds.Builder();
+            builder.include(marker.getPosition());
+            builder.include(new LatLng(AppBaseActivity.mLastLocation.getLatitude(),
+                    AppBaseActivity.mLastLocation.getLongitude()));
+            LatLngBounds bounds = builder.build();
+            int padding = 100;
+            CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+            mMap.moveCamera(cu);
+        }
     }
 
     public void setRatingBarListener() {

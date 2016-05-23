@@ -27,9 +27,10 @@
     <string name="category_animal">Pet Shops</string>
     <string name="category_notary">Tabelião e Correios</string>
 
-    <string name="action_add">Adicionar</string>
+    <string name="action_add">Adicionar novo local</string>
     <string name="action_send">Enviar</string>
     <string name="action_check">Check-in</string>
+    <string name="action_directions">Direções</string>
     <string name="action_cancel">Cancelar</string>
 
     <string name="add_dialog_title">Adicionar novo ponto</string>
@@ -40,14 +41,18 @@
     <string name="title_activity_maps">Map</string>
 
     <string name="review_sent">Análise enviada!</string>
+    <string name="check_in_sent">Check-in realizado!</string>
 
     <!-- Tabs -->
     <string name="map_tab">Mapa</string>
     <string name="list_tab">Lista</string>
 
+    <string name="rate">Avalie:</string>
+
     <!-- Errors -->
     <string name="no_places">Sem lugares disponíveis</string>
     <string name="no_reviews">Sem avaliações, seja o primeiro!</string>
 
-    <string name="distance_km">%1$.2f km</string>
+    <string name="distance_km">%1$.3f km</string>
+    <string name="distance_m">%1$.2f m</string>
 ***REMOVED***

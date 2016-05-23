@@ -89,8 +89,6 @@ public class PlaceActivity extends AppBaseActivity implements OnPlaceSelectedLis
         int id = item.getItemId();
 
         switch (id) {
-            case R.id.action_settings:
-                return true;
             case R.id.action_add:
                 Dialogs.addPlace(this);
                 return true;

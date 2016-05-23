@@ -29,7 +29,7 @@
             android:layout_height="wrap_content" />
 
         <TextView
-            android:text="Avalie:"
+            android:text="@string/rate"
             android:textSize="14sp"
             android:layout_gravity="center_horizontal"
             android:layout_width="wrap_content"
@@ -43,6 +43,17 @@
             android:layout_gravity="center_horizontal"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
+
+        <FrameLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:id="@+id/map_place"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"
+            tools:context=".fragments.PlaceFragment"
+            android:layout_width="match_parent"
+            android:layout_margin="@dimen/large"
+            android:layout_height="250dp" />
 
         <TextView
             android:id="@+id/no_reviews"

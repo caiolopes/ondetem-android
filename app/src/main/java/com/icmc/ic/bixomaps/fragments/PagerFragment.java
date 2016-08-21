@@ -1,6 +1,7 @@
 package com.icmc.ic.bixomaps.fragments;
 
 import android.content.Context;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.TabLayout;
@@ -52,12 +53,7 @@ public class PagerFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         mTitle = getArguments().getString("TITLE");
-    }
-
-    public void setError(boolean error) {
-        mError = error;
     }
 
     @Override
@@ -77,13 +73,11 @@ public class PagerFragment extends Fragment {
 
         mPlacesMapFragment = PlacesMapFragment.newInstance();
         mPlacesListFragment = PlacesListFragment.newInstance();
-
-        mPlacesListFragment.setError(mError);
     }
 
-    public void refresh() {
+    public void refresh(Location location) {
         mPlacesListFragment.refresh();
-        mPlacesMapFragment.refresh();
+        mPlacesMapFragment.refresh(location);
     }
 
     class ViewPagerAdapter extends FragmentPagerAdapter {

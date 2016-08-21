@@ -1,6 +1,8 @@
 package com.icmc.ic.bixomaps;
 
+import android.content.Intent;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -15,7 +17,6 @@ import com.icmc.ic.bixomaps.fragments.PagerFragment;
 import com.icmc.ic.bixomaps.fragments.PlaceFragment;
 import com.icmc.ic.bixomaps.models.MessageResponse;
 import com.icmc.ic.bixomaps.network.Api;
-import com.icmc.ic.bixomaps.views.Dialogs;
 
 import org.simpleframework.xml.core.Persister;
 
@@ -36,6 +37,7 @@ public class PlaceActivity extends AppBaseActivity implements OnPlaceSelectedLis
     private List<MessageResponse.Place> mPlaces;
     private MessageResponse.Place mPlace;
     private PagerFragment mPagerFragment;
+    private String mCategory;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -69,8 +71,8 @@ public class PlaceActivity extends AppBaseActivity implements OnPlaceSelectedLis
         }
 
         if (getIntent().hasExtra("CATEGORY")) {
-            String category = getIntent().getStringExtra("CATEGORY");
-            getRecommendations(category);
+            mCategory = getIntent().getStringExtra("CATEGORY");
+            getRecommendations(null);
         }
     }
 
@@ -90,7 +92,8 @@ public class PlaceActivity extends AppBaseActivity implements OnPlaceSelectedLis
 
         switch (id) {
             case R.id.action_add:
-                Dialogs.addPlace(this);
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://143.107.183.246:8888"));
+                startActivity(browserIntent);
                 return true;
             case android.R.id.home:
                 onBackPressed();
@@ -107,23 +110,26 @@ public class PlaceActivity extends AppBaseActivity implements OnPlaceSelectedLis
 
     /**
      * Method that interacts with API to get the all the recommendations of this category.
-     * @param category category name
+     * @param location location
      */
-    public void getRecommendations(String category) {
-        final Location mLastLocation = AppBaseActivity.mLastLocation;
+    @Override
+    public void getRecommendations(final Location location) {
+        final Location mLastLocation = location == null ? AppBaseActivity.mLastLocation : location;
 
-        if (mLastLocation != null && category != null) {
+        mPlaces.clear();
+        if (mLastLocation != null && mCategory != null) {
             Api presenter = new Api();
-            presenter.getRecommendations(mLastLocation, category).subscribeOn(Schedulers.io())
+            presenter.getRecommendations(mLastLocation, mCategory).subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Subscriber<ResponseBody>() {
                         @Override
                         public void onCompleted() {
+                            mPagerFragment.refresh(mLastLocation);
                         }
 
                         @Override
                         public void onError(Throwable e) {
-                            mPagerFragment.setError(true);
+                            mPagerFragment.refresh(mLastLocation);
                         }
 
                         @Override
@@ -139,13 +145,9 @@ public class PlaceActivity extends AppBaseActivity implements OnPlaceSelectedLis
 
                             if (response != null) {
                                 mPlaces.addAll(response.getReply().getRecommendations());
-                                mPagerFragment.setError(false);
-                                mPagerFragment.refresh();
                             }
                         }
                     });
-        } else {
-            mPagerFragment.setError(true);
         }
     }
 

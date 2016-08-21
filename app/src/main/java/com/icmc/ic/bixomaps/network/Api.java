@@ -8,6 +8,7 @@ import com.icmc.ic.bixomaps.models.MessageRequest;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 import okhttp3.ResponseBody;
 import retrofit2.Response;
@@ -24,7 +25,7 @@ public class Api {
         MessageRequest.Recommend recommend = new MessageRequest.Recommend();
         MessageRequest.User user = new MessageRequest.User();
         user.setId(Build.SERIAL);
-        SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
         Date now = new Date();
         user.setDate(sdfDate.format(now));
         user.setLat("" + location.getLatitude());

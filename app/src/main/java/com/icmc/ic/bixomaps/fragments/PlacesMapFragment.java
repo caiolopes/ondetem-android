@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,6 +21,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
@@ -41,6 +43,7 @@ public class PlacesMapFragment extends Fragment implements OnMapReadyCallback {
     private OnPlaceSelectedListener mCallback;
     private GoogleMap mMap;
     private Map<Marker, Integer> mMarkerMap;
+    private Integer mCameraIdle = 0;
 
     public static PlacesMapFragment newInstance() {
 
@@ -97,7 +100,27 @@ public class PlacesMapFragment extends Fragment implements OnMapReadyCallback {
         if(Helper.checkPermission(getActivity())) {
             mMap.setMyLocationEnabled(true);
             mMap.getUiSettings().setZoomControlsEnabled(true);
-            refresh();
+            mMap.setOnCameraIdleListener(new GoogleMap.OnCameraIdleListener() {
+                @Override
+                public void onCameraIdle() {
+                    if (isVisible()) {
+                        if (mCameraIdle > 0) {
+                            Log.d(TAG, "CameraIdle!");
+                            Location location = new Location("place");
+                            location.setLatitude(mMap.getCameraPosition().target.latitude);
+                            location.setLongitude(mMap.getCameraPosition().target.longitude);
+                            mMap.addMarker(
+                                    new MarkerOptions().title(getString(R.string.recommendation_point))
+                                    .position(new LatLng(location.getLatitude(), location.getLongitude()))
+                                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+                            );
+                            mCallback.getRecommendations(location);
+                        }
+                        mCameraIdle++;
+                    }
+                }
+            });
+            refresh(AppBaseActivity.mLastLocation);
 
             // Set a listener for info window events.
             mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
@@ -153,30 +176,40 @@ public class PlacesMapFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
-    public void refresh() {
-        final Location mLastLocation = AppBaseActivity.mLastLocation;
+    public void refresh(Location location) {
 
-        if (mLastLocation != null) {
-            mMap.clear();
-            mMarkerMap = new HashMap<>();
-            int i = 0;
-            LatLngBounds.Builder builder = new LatLngBounds.Builder();
-            for (MessageResponse.Place p : mCallback.getPlaces()) {
-                Marker marker = mMap.addMarker(new MarkerOptions()
-                        .position(new LatLng(Double.parseDouble(p.getLat()),
-                                Double.parseDouble(p.getLong())))
-                        .title(p.getName()));
-                marker.setSnippet(p.getAddress());
-                builder.include(marker.getPosition());
-                mMarkerMap.put(marker, i);
-                i++;
+        if (location != null) {
+            if (mMap != null) {
+                mMap.clear();
+                mMarkerMap = new HashMap<>();
+                int i = 0;
+                LatLngBounds.Builder builder = new LatLngBounds.Builder();
+                for (MessageResponse.Place p : mCallback.getPlaces()) {
+                    Marker marker = mMap.addMarker(new MarkerOptions()
+                            .position(new LatLng(Double.parseDouble(p.getLat()),
+                                    Double.parseDouble(p.getLong())))
+                            .title(p.getName()));
+                    marker.setSnippet(p.getAddress());
+                    builder.include(marker.getPosition());
+                    mMarkerMap.put(marker, i);
+                    i++;
+                }
+                LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+                mMap.addMarker(
+                        new MarkerOptions().title(getString(R.string.recommendation_point))
+                                .position(latLng)
+                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+                );
+                Log.d(TAG, "cameraIdle: " + mCameraIdle);
+                if (mCameraIdle == 0) {
+                    int padding = 100;
+                    // Include recommendation point
+                    builder.include(latLng);
+                    LatLngBounds bounds = builder.build();
+                    CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+                    mMap.moveCamera(cu);
+                }
             }
-            // Include user position
-            builder.include(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()));
-            LatLngBounds bounds = builder.build();
-            int padding = 100;
-            CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
-            mMap.moveCamera(cu);
         }
     }
 

@@ -11,6 +11,7 @@
         android:text="@string/no_places"
         android:padding="@dimen/medium"
         android:gravity="center_horizontal"
+        android:visibility="gone"
         android:textSize="24sp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />

@@ -1,5 +1,7 @@
 package com.icmc.ic.bixomaps.fragments;
 
+import android.location.Location;
+
 import com.icmc.ic.bixomaps.models.MessageResponse;
 
 import java.util.List;
@@ -13,4 +15,5 @@ public interface OnPlaceSelectedListener {
     MessageResponse.Place getPlace();
     void onPlaceSelected(int position);
     void setTitle(String title);
+    void getRecommendations(Location location);
 }

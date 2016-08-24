@@ -7,7 +7,7 @@ import org.simpleframework.xml.Text;
 
 /**
  *
- * Created by caiolopes on 5/23/16.
+ * @author Caio Lopes
  */
 @Root(name = "message")
 public class EventRequest {

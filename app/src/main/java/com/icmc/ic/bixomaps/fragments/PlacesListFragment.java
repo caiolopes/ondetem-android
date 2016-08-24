@@ -2,6 +2,7 @@ package com.icmc.ic.bixomaps.fragments;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
 import android.support.v4.app.Fragment;
@@ -12,9 +13,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.icmc.ic.bixomaps.AppBaseActivity;
 import com.icmc.ic.bixomaps.R;
+import com.icmc.ic.bixomaps.models.MessageResponse;
 import com.icmc.ic.bixomaps.views.adapters.PlaceAdapter;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * List of places.
@@ -25,6 +31,9 @@ public class PlacesListFragment extends Fragment {
     private View mView;
     private PlaceAdapter mAdapter;
     private OnPlaceSelectedListener mCallback;
+    private RecyclerView mRecyclerView;
+    private Integer mSortMethod = 0;
+    private Integer mRecommendationsSize = 15;
 
     public static PlacesListFragment newInstance() {
 
@@ -46,12 +55,20 @@ public class PlacesListFragment extends Fragment {
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        RecyclerView recyclerView = (RecyclerView) mView.findViewById(R.id.places_list);
-        assert recyclerView != null;
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false));
-        recyclerView.setHasFixedSize(true);
-        mAdapter = new PlaceAdapter(getActivity(), mCallback.getPlaces(), AppBaseActivity.mLastLocation);
-        recyclerView.setAdapter(mAdapter);
+        mRecyclerView = (RecyclerView) mView.findViewById(R.id.places_list);
+        assert mRecyclerView != null;
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false));
+        mRecyclerView.setHasFixedSize(true);
+        List<MessageResponse.Place> mPlaces = new ArrayList<>();
+        mPlaces.addAll(mCallback.getPlaces());
+        getPreferences();
+        mAdapter = new PlaceAdapter(getActivity(), mPlaces, mSortMethod);
+        mRecyclerView.setAdapter(mAdapter);
+    }
+
+    private void getPreferences() {
+        mSortMethod = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(getContext()).getString("sort_method", "0"));
+        mRecommendationsSize = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(getContext()).getString("recommendations_size", "15"));
     }
 
     @Override
@@ -64,6 +81,7 @@ public class PlacesListFragment extends Fragment {
                     AppBarLayout appBarLayout = (AppBarLayout) v.findViewById(R.id.app_bar);
                     if (appBarLayout != null) {
                         appBarLayout.setExpanded(true, true);
+                        refresh();
                     }
                 }
             }
@@ -72,12 +90,32 @@ public class PlacesListFragment extends Fragment {
 
     public void refresh() {
         if (mView != null) {
+            getPreferences();
             TextView noPlacesErrorMsg = (TextView) mView.findViewById(R.id.no_places_message);
-            if (mCallback.getPlaces().size() == 0) {
+            List<MessageResponse.Place> places = mCallback.getPlaces();
+            if (places.size() == 0) {
                 noPlacesErrorMsg.setVisibility(View.VISIBLE);
             } else {
+                Collections.sort(places, new Comparator<MessageResponse.Place>() {
+                    @Override
+                    public int compare(MessageResponse.Place place, MessageResponse.Place t1) {
+                        switch (mSortMethod) {
+                            case 1:
+                                return place.getRating() < t1.getRating() ? 1
+                                        : place.getRating() > t1.getRating() ? -1 : 0;
+                            case 2:
+                                return place.getReviews().size() < t1.getReviews().size() ? 1
+                                        : place.getReviews().size() > t1.getReviews().size() ? -1 : 0;
+                            default:
+                            return place.getDistance() < t1.getDistance() ? -1
+                                    : place.getDistance() > t1.getDistance() ? 1 : 0;
+                        }
+                    }
+                });
+                while (places.size() > mRecommendationsSize) places.remove(places.size()-1);
                 noPlacesErrorMsg.setVisibility(View.GONE);
-                mAdapter.notifyDataSetChanged();
+                mAdapter.animateTo(places);
+                mRecyclerView.scrollToPosition(0);
             }
         }
     }

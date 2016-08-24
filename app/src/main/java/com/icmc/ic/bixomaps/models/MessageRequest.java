@@ -1,7 +1,7 @@
 package com.icmc.ic.bixomaps.models;
 
 /**
- * @author caiolopes
+ * @author Caio Lopes
  */
 
 import org.simpleframework.xml.Attribute;

@@ -17,7 +17,7 @@ import com.icmc.ic.bixomaps.R;
 
 /**
  * View Pager Fragment
- * Created by caiolopes on 5/16/16.
+ * @author Caio Lopes
  */
 public class PagerFragment extends Fragment {
     public static final int NUM_PAGES = 2;

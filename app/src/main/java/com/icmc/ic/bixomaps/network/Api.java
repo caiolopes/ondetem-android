@@ -15,7 +15,7 @@ import retrofit2.Response;
 import rx.Observable;
 
 /**
- * @author caiolopes
+ * @author Caio Lopes
  */
 public class Api {
     PoiClient mClient = ServiceGenerator.createService(PoiClient.class);

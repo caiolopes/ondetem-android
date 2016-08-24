@@ -11,7 +11,7 @@ import rx.Observable;
 
 /**
  * Interface for the PoI API
- * @author caiolopes
+ * @author Caio Lopes
  */
 public interface PoiClient {
     @POST("POIbroker/Adapt")

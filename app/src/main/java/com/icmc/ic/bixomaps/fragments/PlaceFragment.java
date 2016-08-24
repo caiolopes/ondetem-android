@@ -10,7 +10,6 @@ import android.support.design.widget.AppBarLayout;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -60,7 +59,6 @@ public class PlaceFragment extends Fragment implements OnMapReadyCallback {
     private RatingBar mRatingBar;
     private ReviewAdapter mAdapter;
     private List<MessageResponse.Reviews> mReviews;
-    private GoogleMap mMap;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -192,37 +190,24 @@ public class PlaceFragment extends Fragment implements OnMapReadyCallback {
         assert recyclerView != null;
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, true));
         mReviews = new ArrayList<>();
-        if (mCallback.getPlace().getReviews() != null) {
+        if (mCallback.getPlace().getReviews().size() > 0) {
             mReviews.addAll(mCallback.getPlace().getReviews());
         } else {
-            TextView noReviewsMsg = (TextView) mView.findViewById(R.id.no_reviews);
-            noReviewsMsg.setVisibility(View.VISIBLE);
+            TextView reviewsHeader = (TextView) mView.findViewById(R.id.reviews_header);
+            reviewsHeader.setText(getString(R.string.no_reviews));
         }
         mAdapter = new ReviewAdapter(mReviews);
         recyclerView.setAdapter(mAdapter);
 
-        String name = mCallback.getPlace().getName();
-        String address = mCallback.getPlace().getAddress();
-        String phone = mCallback.getPlace().getPhone();
-        String website = mCallback.getPlace().getWebsite();
-        float rating = mCallback.getPlace().getRating();
+        ((TextView)mView.findViewById(R.id.place_name)).setText(mCallback.getPlace().getName());
+        ((TextView)mView.findViewById(R.id.place_phone)).setText(mCallback.getPlace().getPhone());
+        ((TextView)mView.findViewById(R.id.place_address)).setText(mCallback.getPlace().getAddress());
+        ((TextView)mView.findViewById(R.id.place_website)).setText(mCallback.getPlace().getWebsite());
+        ((TextView)mView.findViewById(R.id.place_rating))
+                .setText(String.format(Locale.getDefault(), "%.02f", mCallback.getPlace().getRating()));
 
-        String placeInfo =
-                "<p><b>Nome:</b> " + name + "</p>"
-                        + "<p><b>Endereço:</b> " + address + "</p>";
-        if (phone != null)
-            if (!phone.isEmpty())
-                placeInfo = placeInfo.concat("<p><b>Telefone:</b> " + phone + "</p>");
-        if (website != null)
-            if (!website.isEmpty())
-                placeInfo = placeInfo.concat("<p><b>Website:</b> " + website + "</p>");
-        placeInfo = placeInfo.concat("<b>Nota geral:</b> " + String.format(Locale.getDefault(), "%.02f", rating));
-
-        TextView placeInfotextView = (TextView) mView.findViewById(R.id.place_info);
-        assert placeInfotextView != null;
-        placeInfotextView.setText(Html.fromHtml(placeInfo));
         RatingBar ratingBar = (RatingBar) mView.findViewById(R.id.rating);
-        ratingBar.setRating(rating);
+        ratingBar.setRating(mCallback.getPlace().getRating());
         mRatingBar = (RatingBar) mView.findViewById(R.id.rate_place);
         setRatingBarListener();
         clickEvent();
@@ -255,13 +240,15 @@ public class PlaceFragment extends Fragment implements OnMapReadyCallback {
                                 .show();
                         mReviews.add(review);
                         mAdapter.notifyItemInserted(mReviews.size()-1);
+                        TextView reviewsHeader = (TextView) mView.findViewById(R.id.reviews_header);
+                        reviewsHeader.setText(getString(R.string.reviews_title));
                     }
                 });
     }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
+        GoogleMap mMap = googleMap;
 
         if(Helper.checkPermission(getActivity())) {
             mMap.setMyLocationEnabled(true);

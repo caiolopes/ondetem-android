@@ -12,7 +12,7 @@ import retrofit2.converter.simplexml.SimpleXmlConverterFactory;
 /**
  * ServiceGenerator is our API/HTTP client generator.
  * It defines one method to create a basic REST adapter for a given class/interface
- * @author caiolopes
+ * @author Caio Lopes
  */
 public class ServiceGenerator {
     public static final String API_BASE_URL = "http://143.107.183.246:8080";

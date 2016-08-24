@@ -16,7 +16,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 
 /** Helper class with useful methods that can be used in different classes
- * @author caiolopes
+ * @author Caio Lopes
  */
 public class Helper {
     public static final String TAG = Helper.class.getSimpleName();

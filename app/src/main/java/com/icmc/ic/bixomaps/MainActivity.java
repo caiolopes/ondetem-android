@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * Categories List Activity.
  *
- * @author caiolopes
+ * @author Caio Lopes
  */
 public class MainActivity extends AppBaseActivity implements SearchView.OnQueryTextListener {
     public static final String TAG = MainActivity.class.getSimpleName();
@@ -92,7 +92,7 @@ public class MainActivity extends AppBaseActivity implements SearchView.OnQueryT
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main, menu);
+        super.onCreateOptionsMenu(menu);
         MenuItem searchItem = menu.findItem(R.id.action_search);
         SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
         // Configure the search info and add any event listeners...
@@ -108,7 +108,7 @@ public class MainActivity extends AppBaseActivity implements SearchView.OnQueryT
             }
         }
 
-        return super.onCreateOptionsMenu(menu);
+        return true;
     }
 
     @Override
@@ -142,5 +142,9 @@ public class MainActivity extends AppBaseActivity implements SearchView.OnQueryT
 
     @Override
     protected void locationUpdate(Location location) {
+    }
+
+    @Override
+    void userLocationNotAllowed() {
     }
 }

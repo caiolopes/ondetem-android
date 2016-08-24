@@ -6,16 +6,18 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -34,7 +36,7 @@ import com.icmc.ic.bixomaps.utils.Helper;
  * Handles all interaction with the Google API for using GPS location, permissions
  * request for using GPS, callbacks, etc and the action bar menu.
  *
- * @author caiolopes
+ * @author Caio Lopes
  */
 public abstract class AppBaseActivity extends AppCompatActivity
         implements GoogleApiClient.ConnectionCallbacks,
@@ -162,12 +164,12 @@ public abstract class AppBaseActivity extends AppCompatActivity
                 switch (resultCode) {
                     case Activity.RESULT_OK: {
                         // All required changes were successfully made
-                        Toast.makeText(this, "Location enabled by user!", Toast.LENGTH_LONG).show();
+                        startLocationUpdates();
                         break;
                     }
                     case Activity.RESULT_CANCELED: {
                         // The user was asked to change settings, but chose not to
-                        Toast.makeText(this, "Location not enabled, user cancelled.", Toast.LENGTH_LONG).show();
+                        userLocationNotAllowed();
                         break;
                     }
                     default: {
@@ -177,6 +179,8 @@ public abstract class AppBaseActivity extends AppCompatActivity
                 break;
         }
     }
+
+    abstract void userLocationNotAllowed();
 
     @Override
     public void onLocationChanged(Location location) {
@@ -239,8 +243,7 @@ public abstract class AppBaseActivity extends AppCompatActivity
             case REQUEST_ACCESS_FINE_LOCATION:
                 if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                     // Permission Denied
-                    Toast.makeText(AppBaseActivity.this, "Location Denied", Toast.LENGTH_SHORT)
-                            .show();
+                    userLocationNotAllowed();
                 } else {
                     startLocationUpdates();
                 }
@@ -280,6 +283,37 @@ public abstract class AppBaseActivity extends AppCompatActivity
     public void setContentView(View view, ViewGroup.LayoutParams params) {
         if (view_stub != null) {
             view_stub.addView(view, params);
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        switch (id) {
+            case R.id.action_settings:
+                Intent intent = new Intent(this, SettingsActivity.class);
+                startActivity(intent);
+                return true;
+            case R.id.action_add:
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://143.107.183.246:8888"));
+                startActivity(browserIntent);
+                return true;
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
     }
 }

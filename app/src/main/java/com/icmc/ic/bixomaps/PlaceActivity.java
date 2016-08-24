@@ -1,8 +1,6 @@
 package com.icmc.ic.bixomaps;
 
-import android.content.Intent;
 import android.location.Location;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -10,7 +8,6 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
 import android.util.Log;
 import android.view.Menu;
-import android.view.MenuItem;
 
 import com.icmc.ic.bixomaps.fragments.OnPlaceSelectedListener;
 import com.icmc.ic.bixomaps.fragments.PagerFragment;
@@ -30,7 +27,7 @@ import rx.schedulers.Schedulers;
 
 /**
  * Category Activity.
- * Created by caiolopes on 5/14/16.
+ * @author Caio Lopes
  */
 public class PlaceActivity extends AppBaseActivity implements OnPlaceSelectedListener {
     public static final String TAG = PlaceActivity.class.getSimpleName();
@@ -38,6 +35,7 @@ public class PlaceActivity extends AppBaseActivity implements OnPlaceSelectedLis
     private MessageResponse.Place mPlace;
     private PagerFragment mPagerFragment;
     private String mCategory;
+    private Location mLastUsedLocation = null;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -78,34 +76,25 @@ public class PlaceActivity extends AppBaseActivity implements OnPlaceSelectedLis
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
+        super.onCreateOptionsMenu(menu);
+        menu.findItem(R.id.action_settings).setEnabled(false).setVisible(false);
+        menu.findItem(R.id.action_search).setEnabled(false).setVisible(false);
         return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        switch (id) {
-            case R.id.action_add:
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://143.107.183.246:8888"));
-                startActivity(browserIntent);
-                return true;
-            case android.R.id.home:
-                onBackPressed();
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
     }
 
     @Override
     protected void locationUpdate(Location location) {
         //Log.d(TAG, "Location Update!");
+    }
+
+    @Override
+    void userLocationNotAllowed() {
+        mPagerFragment.refresh(null);
+    }
+
+    @Override
+    public Location getLastUsedLocation() {
+        return mLastUsedLocation;
     }
 
     /**
@@ -114,22 +103,22 @@ public class PlaceActivity extends AppBaseActivity implements OnPlaceSelectedLis
      */
     @Override
     public void getRecommendations(final Location location) {
-        final Location mLastLocation = location == null ? AppBaseActivity.mLastLocation : location;
+        mLastUsedLocation = location == null ? AppBaseActivity.mLastLocation : location;
 
         mPlaces.clear();
-        if (mLastLocation != null && mCategory != null) {
+        if (mLastUsedLocation != null && mCategory != null) {
             Api presenter = new Api();
-            presenter.getRecommendations(mLastLocation, mCategory).subscribeOn(Schedulers.io())
+            presenter.getRecommendations(mLastUsedLocation, mCategory).subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Subscriber<ResponseBody>() {
                         @Override
                         public void onCompleted() {
-                            mPagerFragment.refresh(mLastLocation);
+                            mPagerFragment.refresh(mLastUsedLocation);
                         }
 
                         @Override
                         public void onError(Throwable e) {
-                            mPagerFragment.refresh(mLastLocation);
+                            mPagerFragment.refresh(mLastUsedLocation);
                         }
 
                         @Override
@@ -145,6 +134,12 @@ public class PlaceActivity extends AppBaseActivity implements OnPlaceSelectedLis
 
                             if (response != null) {
                                 mPlaces.addAll(response.getReply().getRecommendations());
+                                for (MessageResponse.Place place : mPlaces) {
+                                    Location location = new Location("Place Location");
+                                    location.setLatitude(Double.parseDouble(place.getLat()));
+                                    location.setLongitude(Double.parseDouble(place.getLong()));
+                                    place.setDistance(location.distanceTo(mLastLocation));
+                                }
                             }
                         }
                     });

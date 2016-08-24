@@ -2,6 +2,7 @@ package com.icmc.ic.bixomaps.models;
 
 /**
  * Model for a category item on the main menu
+ * @author Caio Lopes
  */
 public class Category {
     private String name;

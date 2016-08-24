@@ -6,10 +6,11 @@ import org.simpleframework.xml.ElementList;
 import org.simpleframework.xml.Root;
 import org.simpleframework.xml.Text;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author caiolopes
+ * @author Caio Lopes
  */
 
 @Root(name = "message")
@@ -63,7 +64,9 @@ public class MessageResponse {
         String website;
 
         @ElementList(name = "reviews", entry = "review", required = false)
-        List<Reviews> reviews;
+        List<Reviews> reviews = new ArrayList<>();
+
+        float distance;
 
         public String getAddress() { return this.address; }
         public void setAddress(String _value) { this.address = _value; }
@@ -115,6 +118,14 @@ public class MessageResponse {
 
         public List<Reviews> getReviews() { return this.reviews; }
         public void setReviews(List<Reviews> _value) { this.reviews = _value; }
+
+        public float getDistance() {
+            return distance;
+        }
+
+        public void setDistance(float distance) {
+            this.distance = distance;
+        }
     }
 
     public static class Reviews {

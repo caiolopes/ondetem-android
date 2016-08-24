@@ -1,11 +1,14 @@
 package com.icmc.ic.bixomaps.views.adapters;
 
 import android.content.Context;
-import android.location.Location;
+import android.content.Intent;
+import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.RatingBar;
 import android.widget.TextView;
 
 import com.icmc.ic.bixomaps.R;
@@ -17,24 +20,31 @@ import java.util.List;
 
 /**
  * Place list Adapter
- * Created by caiolopes on 5/15/16.
  */
 public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.ViewHolder> {
     public static final String TAG = PlaceAdapter.class.getSimpleName();
-    Context mContext;
-    List<MessageResponse.Place> mPlaces;
-    Location mLocation;
+    private Context mContext;
+    private List<MessageResponse.Place> mPlaces;
+    private Integer mSortMethod;
 
-    public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
         TextView name;
         TextView distance;
+        ImageView phone;
+        RatingBar ratingBar;
+        View view;
         ItemClickListener itemClickListener;
 
         public ViewHolder(View itemView) {
             super(itemView);
+            view = itemView;
             name = (TextView) itemView.findViewById(R.id.place_name);
+            phone = (ImageView) itemView.findViewById(R.id.phone);
             distance = (TextView) itemView.findViewById(R.id.place_distance);
+            ratingBar = (RatingBar) itemView.findViewById(R.id.rating);
             itemView.setOnClickListener(this);
+            itemView.setOnLongClickListener(this);
+            phone.setOnClickListener(this);
         }
 
         public void setItemClickListener(ItemClickListener itemClickListener) {
@@ -45,12 +55,18 @@ public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.ViewHolder> 
         public void onClick(View v) {
             itemClickListener.onClick(v, getLayoutPosition(), false);
         }
+
+        @Override
+        public boolean onLongClick(View view) {
+            itemClickListener.onClick(view, getLayoutPosition(), true);
+            return true;
+        }
     }
 
-    public PlaceAdapter(Context context, List<MessageResponse.Place> places, Location location) {
+    public PlaceAdapter(Context context, List<MessageResponse.Place> places, Integer sortMethod) {
         mContext = context;
         mPlaces = places;
-        mLocation = location;
+        mSortMethod = sortMethod;
     }
 
     @Override
@@ -60,18 +76,43 @@ public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.ViewHolder> 
 
     @Override
     public void onBindViewHolder(final PlaceAdapter.ViewHolder holder, int position) {
-        MessageResponse.Place place = mPlaces.get(position);
-        Location location = new Location("Place Location");
-        location.setLatitude(Double.parseDouble(place.getLat()));
-        location.setLongitude(Double.parseDouble(place.getLong()));
+        final MessageResponse.Place place = mPlaces.get(position);
         holder.name.setText(place.getName());
-        holder.distance.setText(mContext.getString(R.string.distance_m, mLocation.distanceTo(location)));
+        switch (mSortMethod) {
+            case 1:
+                holder.distance.setVisibility(View.GONE);
+                holder.ratingBar.setVisibility(View.VISIBLE);
+                holder.ratingBar.setRating(place.getRating());
+                break;
+            case 2:
+                if (place.getReviews().size() == 0)
+                    holder.distance.setText(mContext.getString(R.string.zero_review));
+                else if (place.getReviews().size() == 1)
+                    holder.distance.setText(mContext.getString(R.string.one_review, place.getReviews().size()));
+                else
+                    holder.distance.setText(mContext.getString(R.string.many_reviews, place.getReviews().size()));
+                break;
+            default:
+                if (place.getDistance() < 1000) {
+                    holder.distance.setText(mContext.getString(R.string.distance_m, place.getDistance()));
+                } else {
+                    holder.distance.setText(mContext.getString(R.string.distance_km, place.getDistance()/1000));
+                }
+        }
+
+        if (place.getPhone().length() > 0) {
+            holder.phone.setVisibility(View.VISIBLE);
+        }
 
         holder.setItemClickListener(new ItemClickListener() {
             @Override
             public void onClick(View view, int position, boolean isLongClick) {
-                if (mContext instanceof OnPlaceSelectedListener) {
+                if (mContext instanceof OnPlaceSelectedListener && !isLongClick && view.getId() == holder.view.getId()) {
                     ((OnPlaceSelectedListener)mContext).onPlaceSelected(position);
+                } else if(isLongClick || view.getId() == holder.phone.getId()) {
+                    Intent intent = new Intent(Intent.ACTION_DIAL);
+                    intent.setData(Uri.parse("tel:"+place.getPhone()));
+                    mContext.startActivity(intent);
                 }
             }
         });
@@ -87,5 +128,56 @@ public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.ViewHolder> 
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.place_item, parent, false);
         return new ViewHolder(view);
+    }
+
+    public MessageResponse.Place removeItem(int position) {
+        final MessageResponse.Place model = mPlaces.remove(position);
+        notifyItemRemoved(position);
+        return model;
+    }
+
+    public void addItem(int position, MessageResponse.Place model) {
+        mPlaces.add(position, model);
+        notifyItemInserted(position);
+    }
+
+    public void moveItem(int fromPosition, int toPosition) {
+        final MessageResponse.Place model = mPlaces.remove(fromPosition);
+        mPlaces.add(toPosition, model);
+        notifyItemMoved(fromPosition, toPosition);
+    }
+
+    public void animateTo(List<MessageResponse.Place> models) {
+        applyAndAnimateRemovals(models);
+        applyAndAnimateAdditions(models);
+        applyAndAnimateMovedItems(models);
+    }
+
+    private void applyAndAnimateRemovals(List<MessageResponse.Place> newModels) {
+        for (int i = mPlaces.size() - 1; i >= 0; i--) {
+            final MessageResponse.Place model = mPlaces.get(i);
+            if (!newModels.contains(model)) {
+                removeItem(i);
+            }
+        }
+    }
+
+    private void applyAndAnimateAdditions(List<MessageResponse.Place> newModels) {
+        for (int i = 0, count = newModels.size(); i < count; i++) {
+            final MessageResponse.Place model = newModels.get(i);
+            if (!mPlaces.contains(model)) {
+                addItem(i, model);
+            }
+        }
+    }
+
+    private void applyAndAnimateMovedItems(List<MessageResponse.Place> newModels) {
+        for (int toPosition = newModels.size() - 1; toPosition >= 0; toPosition--) {
+            final MessageResponse.Place model = newModels.get(toPosition);
+            final int fromPosition = mPlaces.indexOf(model);
+            if (fromPosition >= 0 && fromPosition != toPosition) {
+                moveItem(fromPosition, toPosition);
+            }
+        }
     }
 }

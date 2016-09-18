@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-package="com.icmc.ic.bixomaps">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.icmc.ic.bixomaps">
     <!--
          The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
          Google Maps Android API v2, but you must specify either coarse or fine
@@ -53,9 +54,7 @@ package="com.icmc.ic.bixomaps">
          sign the APK for publishing.
          You can define the keys for the debug and release targets in src/debug/ and src/release/. -->
         <meta-data
-        android:name="com.google.android.geo.API_KEY" android:value="@string/google_maps_key" />
-        <meta-data
-            android:name="io.fabric.ApiKey"
-            android:value="85af4f7eb80aa16d9ad0e53832c3972b6d85299e" />
+        android:name="com.google.android.geo.API_KEY"
+            android:value="@string/google_maps_key" />
     </application>
 </manifest>

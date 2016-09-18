@@ -1,15 +1,7 @@
-.gradle
-.idea/
-/local.properties
-/.idea/workspace.xml
-/.idea/libraries
-.DS_Store
-/build
-/captures
-/debug
-/daogenerator
+captures
+app/src/debug
+app/src/release
 
-.DS_Store
 
 # built application files
 *.apk

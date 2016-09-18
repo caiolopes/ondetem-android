@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-***REMOVED***
+<resources>
     <color name="colorPrimary">#5aabc6</color>
     <color name="colorPrimaryDark">#3a5f6b</color>
     <color name="colorAccent">#000000</color>
     <color name="mediumGray">#e4e4e4</color>
     <color name="white">#fff</color>
-***REMOVED***
+</resources>

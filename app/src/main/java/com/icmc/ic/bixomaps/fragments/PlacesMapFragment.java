@@ -7,6 +7,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -21,11 +22,11 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.icmc.ic.bixomaps.AppBaseActivity;
 import com.icmc.ic.bixomaps.R;
 import com.icmc.ic.bixomaps.models.MessageResponse;
 import com.icmc.ic.bixomaps.utils.Helper;
@@ -43,8 +44,9 @@ public class PlacesMapFragment extends Fragment implements OnMapReadyCallback {
     private MapView mMapView;
     private GoogleMap mMap;
     private Map<Marker, Integer> mMarkerMap;
-    private Integer mCameraIdle = 0;
-    private Marker lastOpenned = null;
+    private FloatingActionButton mFabRefresh;
+    private Location mLocation;
+    private Integer updateMapCounter = 0;
 
     public static PlacesMapFragment newInstance() {
 
@@ -78,7 +80,23 @@ public class PlacesMapFragment extends Fragment implements OnMapReadyCallback {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_places_map, container, false);
+        View view = inflater.inflate(R.layout.fragment_places_map, container, false);
+        mFabRefresh = (FloatingActionButton) view.findViewById(R.id.fab_refresh);
+        mFabRefresh.hide();
+        mFabRefresh.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mCallback.getRecommendations(mLocation);
+                updateMap(mLocation, mMap);
+                mFabRefresh.hide();
+                /*mMap.addMarker(
+                        new MarkerOptions().title(getString(R.string.recommendation_point))
+                                .position(new LatLng(location.getLatitude(), location.getLongitude()))
+                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+                );*/
+            }
+        });
+        return view;
     }
 
     @Override
@@ -91,7 +109,6 @@ public class PlacesMapFragment extends Fragment implements OnMapReadyCallback {
             mMapView.onResume();
             // Set the map ready callback to receive the GoogleMap object
             mMapView.getMapAsync(this);
-            mCameraIdle = 0;
         }
     }
 
@@ -134,7 +151,7 @@ public class PlacesMapFragment extends Fragment implements OnMapReadyCallback {
      * installed Google Play services and returned to the app.
      */
     @Override
-    public void onMapReady(GoogleMap googleMap) {
+    public void onMapReady(final GoogleMap googleMap) {
         MapsInitializer.initialize(getContext());
         mMap = googleMap;
 
@@ -145,21 +162,18 @@ public class PlacesMapFragment extends Fragment implements OnMapReadyCallback {
                 @Override
                 public void onCameraIdle() {
                     if (isVisible()) {
-                        if (mCameraIdle > 0 && mCallback.getLastUsedLocation() != null) {
+                        if (mCallback.getLastUsedLocation() != null) {
                             Location location = new Location("place");
                             location.setLatitude(mMap.getCameraPosition().target.latitude);
                             location.setLongitude(mMap.getCameraPosition().target.longitude);
                             if (location.distanceTo(mCallback.getLastUsedLocation()) > 100) {
-                                mMap.addMarker(
-                                        new MarkerOptions().title(getString(R.string.recommendation_point))
-                                                .position(new LatLng(location.getLatitude(), location.getLongitude()))
-                                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
-                                );
-                                updateMap(location, mMap);
-                                mCallback.getRecommendations(location);
+                                mLocation = location;
+                                mMap = googleMap;
+                                mFabRefresh.show();
+                            } else {
+                                mFabRefresh.hide();
                             }
                         }
-                        mCameraIdle++;
                     }
                 }
             });
@@ -202,35 +216,7 @@ public class PlacesMapFragment extends Fragment implements OnMapReadyCallback {
                 }
             });
 
-            // Since we are consuming the event this is necessary to
-            // manage closing openned markers before openning new ones
-
-            mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-                public boolean onMarkerClick(Marker marker) {
-                    // Check if there is an open info window
-                    if (lastOpenned != null) {
-                        // Close the info window
-                        lastOpenned.hideInfoWindow();
-
-                        // Is the marker the same marker that was already open
-                        if (lastOpenned.equals(marker)) {
-                            // Nullify the lastOpenned object
-                            lastOpenned = null;
-                            // Return so that the info window isn't openned again
-                            return true;
-                        }
-                    }
-
-                    // Open the info window for the marker
-                    marker.showInfoWindow();
-                    // Re-assign the last openned such that we can close it later
-                    lastOpenned = marker;
-
-                    // Event was handled by our code do not launch default behaviour.
-                    return true;
-                }
-            });
-
+            updateMapCounter = 0;
             updateMap(mCallback.getLastUsedLocation(), googleMap);
         }
     }
@@ -263,25 +249,26 @@ public class PlacesMapFragment extends Fragment implements OnMapReadyCallback {
                 Marker marker = map.addMarker(new MarkerOptions()
                         .position(new LatLng(Double.parseDouble(p.getLat()),
                                 Double.parseDouble(p.getLong())))
-                        .title(p.getName()));
+                        .title(p.getName())
+                        .icon(mCallback.getCategoryIcon()));
                 marker.setSnippet(p.getAddress());
                 builder.include(marker.getPosition());
                 mMarkerMap.put(marker, i);
                 i++;
             }
-            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-            map.addMarker(
-                    new MarkerOptions().title(getString(R.string.recommendation_point))
-                            .position(latLng)
-                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
-            );
-            if (mCameraIdle == 0) {
+            if (updateMapCounter == 0 && mCallback.getPlaces().size() > 0) {
+                /*mMap.addMarker(
+                        new MarkerOptions().title(getString(R.string.recommendation_point))
+                                .position(latLng)
+                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));*/
                 int padding = 100;
-                // Include recommendation point
+                // user location
+                LatLng latLng = new LatLng(AppBaseActivity.mLastLocation.getLatitude(), AppBaseActivity.mLastLocation.getLongitude());
                 builder.include(latLng);
                 LatLngBounds bounds = builder.build();
                 CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
                 map.moveCamera(cu);
+                updateMapCounter++;
             }
         }
     }

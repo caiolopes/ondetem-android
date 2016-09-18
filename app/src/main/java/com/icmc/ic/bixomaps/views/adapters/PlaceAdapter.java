@@ -25,11 +25,11 @@ public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.ViewHolder> 
     public static final String TAG = PlaceAdapter.class.getSimpleName();
     private Context mContext;
     private List<MessageResponse.Place> mPlaces;
-    private Integer mSortMethod;
 
     public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
         TextView name;
         TextView distance;
+        TextView reviews;
         ImageView phone;
         RatingBar ratingBar;
         View view;
@@ -41,6 +41,7 @@ public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.ViewHolder> 
             name = (TextView) itemView.findViewById(R.id.place_name);
             phone = (ImageView) itemView.findViewById(R.id.phone);
             distance = (TextView) itemView.findViewById(R.id.place_distance);
+            reviews = (TextView) itemView.findViewById(R.id.place_reviews);
             ratingBar = (RatingBar) itemView.findViewById(R.id.rating);
             itemView.setOnClickListener(this);
             itemView.setOnLongClickListener(this);
@@ -63,10 +64,9 @@ public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.ViewHolder> 
         }
     }
 
-    public PlaceAdapter(Context context, List<MessageResponse.Place> places, Integer sortMethod) {
+    public PlaceAdapter(Context context, List<MessageResponse.Place> places) {
         mContext = context;
         mPlaces = places;
-        mSortMethod = sortMethod;
     }
 
     @Override
@@ -78,26 +78,19 @@ public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.ViewHolder> 
     public void onBindViewHolder(final PlaceAdapter.ViewHolder holder, int position) {
         final MessageResponse.Place place = mPlaces.get(position);
         holder.name.setText(place.getName());
-        switch (mSortMethod) {
-            case 1:
-                holder.distance.setVisibility(View.GONE);
-                holder.ratingBar.setVisibility(View.VISIBLE);
-                holder.ratingBar.setRating(place.getRating());
-                break;
-            case 2:
-                if (place.getReviews().size() == 0)
-                    holder.distance.setText(mContext.getString(R.string.zero_review));
-                else if (place.getReviews().size() == 1)
-                    holder.distance.setText(mContext.getString(R.string.one_review, place.getReviews().size()));
-                else
-                    holder.distance.setText(mContext.getString(R.string.many_reviews, place.getReviews().size()));
-                break;
-            default:
-                if (place.getDistance() < 1000) {
-                    holder.distance.setText(mContext.getString(R.string.distance_m, place.getDistance()));
-                } else {
-                    holder.distance.setText(mContext.getString(R.string.distance_km, place.getDistance()/1000));
-                }
+        holder.ratingBar.setRating(place.getRating());
+
+        if (place.getReviews().size() == 0)
+            holder.reviews.setText(mContext.getString(R.string.zero_review));
+        else if (place.getReviews().size() == 1)
+            holder.reviews.setText(mContext.getString(R.string.one_review, place.getReviews().size()));
+        else
+            holder.reviews.setText(mContext.getString(R.string.many_reviews, place.getReviews().size()));
+
+        if (place.getDistance() < 1000) {
+            holder.distance.setText(mContext.getString(R.string.distance_m, place.getDistance()));
+        } else {
+            holder.distance.setText(mContext.getString(R.string.distance_km, place.getDistance()/1000));
         }
 
         if (place.getPhone().length() > 0) {

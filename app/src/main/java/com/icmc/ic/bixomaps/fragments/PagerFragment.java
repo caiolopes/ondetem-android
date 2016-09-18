@@ -23,11 +23,10 @@ public class PagerFragment extends Fragment {
     public static final int NUM_PAGES = 2;
     private View mView;
     private ViewPager mViewPager;
-    private PlacesMapFragment mPlacesMapFragment;
-    private PlacesListFragment mPlacesListFragment;
+    private PlacesMapFragment mPlacesMapFragment = PlacesMapFragment.newInstance();
+    private PlacesListFragment mPlacesListFragment = PlacesListFragment.newInstance();
     private String mTitle;
     private OnPlaceSelectedListener mCallback;
-    private boolean mError = false;
 
     @Override
     public void onAttach(Context context) {
@@ -70,9 +69,10 @@ public class PagerFragment extends Fragment {
         TabLayout tabLayout = (TabLayout) mView.findViewById(R.id.tabs);
         assert tabLayout != null;
         tabLayout.setupWithViewPager(mViewPager);
+    }
 
-        mPlacesMapFragment = PlacesMapFragment.newInstance();
-        mPlacesListFragment = PlacesListFragment.newInstance();
+    public void refreshing() {
+        mPlacesListFragment.refreshing();
     }
 
     public void refresh(Location location) {

@@ -2,6 +2,7 @@ package com.icmc.ic.bixomaps.fragments;
 
 import android.location.Location;
 
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.icmc.ic.bixomaps.models.MessageResponse;
 
 import java.util.List;
@@ -17,4 +18,5 @@ public interface OnPlaceSelectedListener {
     void onPlaceSelected(int position);
     void setTitle(String title);
     void getRecommendations(Location location);
+    BitmapDescriptor getCategoryIcon();
 }

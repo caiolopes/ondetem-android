@@ -11,10 +11,12 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.icmc.ic.bixomaps.R;
 import com.icmc.ic.bixomaps.models.MessageResponse;
+import com.icmc.ic.bixomaps.views.DividerItemDecoration;
 import com.icmc.ic.bixomaps.views.adapters.PlaceAdapter;
 
 import java.util.ArrayList;
@@ -59,16 +61,19 @@ public class PlacesListFragment extends Fragment {
         assert mRecyclerView != null;
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false));
         mRecyclerView.setHasFixedSize(true);
+        mRecyclerView.addItemDecoration(new DividerItemDecoration(getActivity()));
         List<MessageResponse.Place> mPlaces = new ArrayList<>();
         mPlaces.addAll(mCallback.getPlaces());
-        getPreferences();
-        mAdapter = new PlaceAdapter(getActivity(), mPlaces, mSortMethod);
+        mAdapter = new PlaceAdapter(getActivity(), mPlaces);
         mRecyclerView.setAdapter(mAdapter);
+        if (mCallback.getLastUsedLocation() == null) {
+            refresh();
+        }
     }
 
-    private void getPreferences() {
-        mSortMethod = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(getContext()).getString("sort_method", "0"));
-        mRecommendationsSize = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(getContext()).getString("recommendations_size", "15"));
+    private void getPreferences(Context context) {
+        mSortMethod = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(context).getString("sort_method", "0"));
+        mRecommendationsSize = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(context).getString("recommendations_size", "15"));
     }
 
     @Override
@@ -88,10 +93,21 @@ public class PlacesListFragment extends Fragment {
         }
     }
 
+    public void refreshing() {
+        if (mView != null) {
+            ProgressBar progressBar = (ProgressBar) mView.findViewById(R.id.progress);
+            TextView noPlacesErrorMsg = (TextView) mView.findViewById(R.id.no_places_message);
+            noPlacesErrorMsg.setVisibility(View.GONE);
+            progressBar.setVisibility(View.VISIBLE);
+        }
+    }
+
     public void refresh() {
         if (mView != null) {
-            getPreferences();
+            if (getActivity() != null) getPreferences(getActivity());
             TextView noPlacesErrorMsg = (TextView) mView.findViewById(R.id.no_places_message);
+            ProgressBar progressBar = (ProgressBar) mView.findViewById(R.id.progress);
+            progressBar.setVisibility(View.GONE);
             List<MessageResponse.Place> places = mCallback.getPlaces();
             if (places.size() == 0) {
                 noPlacesErrorMsg.setVisibility(View.VISIBLE);
@@ -123,7 +139,7 @@ public class PlacesListFragment extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-
+        getPreferences(context);
         // This makes sure that the container activity has implemented
         // the callback interface. If not, it throws an exception
         try {

@@ -1,7 +1,9 @@
 package com.icmc.ic.bixomaps;
 
+import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -34,8 +36,13 @@ public class MainActivity extends AppBaseActivity implements SearchView.OnQueryT
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        boolean showIntro = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("show_intro", true);
+        if (showIntro) {
+            Intent intent = new Intent(this, MyIntro.class);
+            startActivity(intent);
+            finish();
+        }
         setContentView(R.layout.activity_main);
-
         createCategoriesMenu();
         setupSearch();
     }

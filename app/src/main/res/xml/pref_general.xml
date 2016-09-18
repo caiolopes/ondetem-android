@@ -12,7 +12,7 @@
         android:title="@string/pref_title_sort_method" />
 
     <ListPreference
-        android:defaultValue="15"
+        android:defaultValue="10"
         android:entries="@array/pref_recommendations_size_titles"
         android:entryValues="@array/pref_recommendations_size_values"
         android:key="recommendations_size"

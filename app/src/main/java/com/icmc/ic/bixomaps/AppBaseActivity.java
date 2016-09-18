@@ -47,7 +47,7 @@ public abstract class AppBaseActivity extends AppCompatActivity
     protected static final int REQUEST_ACCESS_FINE_LOCATION = 0;
     protected final static int REQUEST_LOCATION = 199;
     protected boolean mRequestingLocationUpdates;
-    public static Location mLastLocation;
+    public static Location mLastLocation = null;
     private FrameLayout view_stub;
 
     @Override

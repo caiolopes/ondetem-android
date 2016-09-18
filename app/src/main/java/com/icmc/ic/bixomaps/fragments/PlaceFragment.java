@@ -87,7 +87,7 @@ public class PlaceFragment extends Fragment implements OnMapReadyCallback {
 
         switch (id) {
             case R.id.action_check:
-                checkIn();
+                checkIn(item);
                 return true;
             case R.id.action_directions:
                 routeEvent();
@@ -103,13 +103,11 @@ public class PlaceFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
-    void checkIn() {
+    private void checkIn(final MenuItem menuItem) {
         Api presenter = new Api();
         presenter.sendEvent(mCallback.getPlace().getId(),
                 mCallback.getPlace().getCategory(),
-                EventRequest.Event.CHECK_IN,
-                null,
-                null,
+                EventRequest.Event.CHECK_IN, null, null,
                 AppBaseActivity.mLastLocation.getLatitude(),
                 AppBaseActivity.mLastLocation.getLongitude())
                 .subscribeOn(Schedulers.io())
@@ -119,6 +117,7 @@ public class PlaceFragment extends Fragment implements OnMapReadyCallback {
                     public void call(Response<ResponseBody> response) {
                         Toast.makeText(getContext(), getString(R.string.check_in_sent), Toast.LENGTH_LONG)
                                 .show();
+                        menuItem.setEnabled(false);
                     }
                 });
     }

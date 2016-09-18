@@ -1,6 +1,9 @@
 package com.icmc.ic.bixomaps;
 
+import android.content.Context;
 import android.location.Location;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -9,6 +12,10 @@ import android.support.v7.app.ActionBar;
 import android.util.Log;
 import android.view.Menu;
 
+import com.github.pwittchen.reactivenetwork.library.Connectivity;
+import com.github.pwittchen.reactivenetwork.library.ReactiveNetwork;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.icmc.ic.bixomaps.fragments.OnPlaceSelectedListener;
 import com.icmc.ic.bixomaps.fragments.PagerFragment;
 import com.icmc.ic.bixomaps.fragments.PlaceFragment;
@@ -22,7 +29,9 @@ import java.util.List;
 
 import okhttp3.ResponseBody;
 import rx.Subscriber;
+import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 /**
@@ -35,7 +44,10 @@ public class PlaceActivity extends AppBaseActivity implements OnPlaceSelectedLis
     private MessageResponse.Place mPlace;
     private PagerFragment mPagerFragment;
     private String mCategory;
-    private Location mLastUsedLocation = null;
+    private Location mLastUsedLocation = mLastLocation;
+    private boolean mCalled = false;
+    private Subscription networkConnectivitySubscription;
+    private Subscription recommendationsSubscription;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -67,10 +79,50 @@ public class PlaceActivity extends AppBaseActivity implements OnPlaceSelectedLis
 
             ft.add(R.id.fragment_container, mPagerFragment).commit();
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        ConnectivityManager cm =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        boolean isConnected = activeNetwork != null &&
+                activeNetwork.isConnectedOrConnecting();
+
+        if (!isConnected) mLastUsedLocation = null;
 
         if (getIntent().hasExtra("CATEGORY")) {
             mCategory = getIntent().getStringExtra("CATEGORY");
-            getRecommendations(null);
+        }
+
+        networkConnectivitySubscription = ReactiveNetwork.observeNetworkConnectivity(this)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action1<Connectivity>() {
+                    @Override public void call(Connectivity connectivity) {
+                        if (connectivity.getState() == NetworkInfo.State.CONNECTED) {
+                            mPagerFragment.refreshing();
+                            getRecommendations(null);
+                        }
+                    }
+                });
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        safelyUnsubscribe(networkConnectivitySubscription, recommendationsSubscription);
+    }
+
+
+
+    private void safelyUnsubscribe(Subscription... subscriptions) {
+        for (Subscription subscription : subscriptions) {
+            if (subscription != null && !subscription.isUnsubscribed()) {
+                subscription.unsubscribe();
+            }
         }
     }
 
@@ -84,7 +136,10 @@ public class PlaceActivity extends AppBaseActivity implements OnPlaceSelectedLis
 
     @Override
     protected void locationUpdate(Location location) {
-        //Log.d(TAG, "Location Update!");
+        if (mCalled && mPlaces.size() == 0) {
+            mPagerFragment.refreshing();
+            getRecommendations(null);
+        }
     }
 
     @Override
@@ -104,11 +159,10 @@ public class PlaceActivity extends AppBaseActivity implements OnPlaceSelectedLis
     @Override
     public void getRecommendations(final Location location) {
         mLastUsedLocation = location == null ? AppBaseActivity.mLastLocation : location;
-
         mPlaces.clear();
         if (mLastUsedLocation != null && mCategory != null) {
             Api presenter = new Api();
-            presenter.getRecommendations(mLastUsedLocation, mCategory).subscribeOn(Schedulers.io())
+            recommendationsSubscription = presenter.getRecommendations(mLastUsedLocation, mCategory).subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Subscriber<ResponseBody>() {
                         @Override
@@ -143,7 +197,8 @@ public class PlaceActivity extends AppBaseActivity implements OnPlaceSelectedLis
                             }
                         }
                     });
-        }
+        } else
+            mCalled = true;
     }
 
     @Override
@@ -176,6 +231,31 @@ public class PlaceActivity extends AppBaseActivity implements OnPlaceSelectedLis
             actionBar.setTitle(title);
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setHomeButtonEnabled(true);
+        }
+    }
+
+    @Override
+    public BitmapDescriptor getCategoryIcon() {
+        switch(mCategory) {
+            case "car_services": return BitmapDescriptorFactory.fromResource(R.drawable.ic_action_car);
+            case "bank": return BitmapDescriptorFactory.fromResource(R.drawable.ic_action_creditcard);
+            case "education": return BitmapDescriptorFactory.fromResource(R.drawable.ic_action_book);
+            case "medical_care": return BitmapDescriptorFactory.fromResource(R.drawable.ic_hospital);
+            case "emergency_services": return BitmapDescriptorFactory.fromResource(R.drawable.ic_emergency);
+            case "culture_entertainment": return BitmapDescriptorFactory.fromResource(R.drawable.ic_action_music_1);
+            case "food_drink": return BitmapDescriptorFactory.fromResource(R.drawable.ic_action_restaurant);
+            case "government": return BitmapDescriptorFactory.fromResource(R.drawable.ic_account_balance);
+            case "lodging": return BitmapDescriptorFactory.fromResource(R.drawable.ic_hotel);
+            case "recreation": return BitmapDescriptorFactory.fromResource(R.drawable.ic_action_bike);
+            case "public_services": return BitmapDescriptorFactory.fromResource(R.drawable.ic_action_business);
+            case "service_shops_stores": return BitmapDescriptorFactory.fromResource(R.drawable.ic_action_cart);
+            case "public_transport": return BitmapDescriptorFactory.fromResource(R.drawable.ic_action_bus);
+            case "places_worship": return BitmapDescriptorFactory.fromResource(R.drawable.ic_church);
+            case "basic_home_services": return BitmapDescriptorFactory.fromResource(R.drawable.ic_action_home);
+            case "beauty_care": return BitmapDescriptorFactory.fromResource(R.drawable.ic_beauty);
+            case "administrative_services": return BitmapDescriptorFactory.fromResource(R.drawable.ic_action_stamp);
+            case "animal_care": return BitmapDescriptorFactory.fromResource(R.drawable.ic_pets);
+            default: return null;
         }
     }
 

@@ -1,0 +1,113 @@
+***REMOVED***
+    <string name="app_name">Onde Tem</string>
+
+    <!-- Intro -->
+    <string name="intro_explore_title">Explore a cidade</string>
+    <string name="intro_map_title">Mapa</string>
+    <string name="intro_opinion_title">Opinião</string>
+    <string name="intro_explore_description">Receba recomendações de lugares a partir de diversas categorias a sua escolha</string>
+    <string name="intro_map_description">Navegue no mapa e carregue novos pontos de interesse em lugares diferentes da sua localização</string>
+    <string name="intro_opinion_description">Compartilhe sua opinião e melhore as recomendações feitas a você! Vamos começar?</string>
+
+    <string name="recommendation_point">Ponto de recomendações</string>
+    <string name="categories">Categorias:</string>
+    <!-- Categories -->
+    <string name="category_administrative">Serviços Administrativos</string>
+    <string name="category_animal">Pet Shops</string>
+    <string name="category_bank">Bancos</string>
+    <string name="category_beauty">Beleza</string>
+    <string name="category_car">Serviços Automotivos</string>
+    <string name="category_culture">Cultura e Entretenimento</string>
+    <string name="category_education">Educação</string>
+    <string name="category_emergency">Emergências</string>
+    <string name="category_food">Alimentação</string>
+    <string name="category_government">Orgãos Governamentais</string>
+    <string name="category_home">Serviços Domésticos</string>
+    <string name="category_lodging">Hospedagem</string>
+    <string name="category_medical">Hospitais e Clínicas</string>
+    <string name="category_notary">Tabelião e Correios</string>
+    <string name="category_public_services">Serviços Públicos</string>
+    <string name="category_recreation">Recreação</string>
+    <string name="category_shops">Compras</string>
+    <string name="category_transport">Transporte Público</string>
+    <string name="category_worship">Locais de Adoração</string>
+
+    <string name="action_add">Adicionar novo local</string>
+    <string name="action_call">Ligar</string>
+    <string name="action_send">Enviar</string>
+    <string name="action_check">Check-in</string>
+    <string name="action_directions">Direções</string>
+    <string name="action_cancel">Cancelar</string>
+
+    <string name="add_dialog_title">Adicionar novo ponto</string>
+    <string name="add_dialog_name">Nome</string>
+    <string name="dialog_review_title">Avalie esse local:</string>
+    <string name="dialog_comment">Comentário</string>
+    <string name="action_settings">Opções</string>
+    <string name="title_activity_maps">Map</string>
+
+    <string name="review_sent">Análise enviada!</string>
+    <string name="check_in_sent">Check-in realizado!</string>
+
+    <string name="action_search">Buscar</string>
+    <string name="rate">Avalie:</string>
+
+    <!-- Place -->
+    <string name="place_name_label">Nome:</string>
+    <string name="place_address_label">Endereço:</string>
+    <string name="place_phone_label">Telefone:</string>
+    <string name="place_website_label">Website:</string>
+    <string name="place_rating_label">Nota geral:</string>
+
+    <!-- Tabs -->
+    <string name="map_tab">Mapa</string>
+    <string name="list_tab">Lista</string>
+
+    <!-- Errors -->
+    <string name="no_places">Sem lugares disponíveis</string>
+    <string name="no_reviews">Sem avaliações, seja o primeiro!</string>
+    <string name="reviews_title">Avaliações:</string>
+    <string name="empty_review">Comentário não pode estar em branco</string>
+
+    <string name="distance_km">%1$.2f km</string>
+    <string name="distance_m">%1$.2f m</string>
+    <string name="zero_review">Sem avaliações</string>
+    <string name="one_review">%1$d avaliação</string>
+    <string name="many_reviews">%1$d avaliações</string>
+
+    <!-- Strings related to Settings -->
+    <string name="title_activity_settings">Opções</string>
+
+    <!-- General settings -->
+    <string name="pref_header_general">Geral</string>
+
+    <string name="pref_title_sort_method">Critério de ordenação</string>
+    <string-array name="pref_sort_method_titles">
+        <item>Distância</item>
+        <item>Nota</item>
+        <item>Comentários</item>
+    </string-array>
+    <string-array name="pref_sort_method_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+
+    <string name="pref_title_recommendations_size">Total de recomendações</string>
+    <string-array name="pref_recommendations_size_titles">
+        <item>15</item>
+        <item>10</item>
+        <item>8</item>
+        <item>5</item>
+        <item>3</item>
+        <item>1</item>
+    </string-array>
+    <string-array name="pref_recommendations_size_values">
+        <item>15</item>
+        <item>10</item>
+        <item>8</item>
+        <item>5</item>
+        <item>3</item>
+        <item>1</item>
+    </string-array>
+***REMOVED***

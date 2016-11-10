@@ -200,7 +200,7 @@ public abstract class AppBaseActivity extends AppCompatActivity
 
     protected void startLocationUpdates() {
         if (Helper.checkPermission(this))
-            LocationServices.FusedLocationApi.requestLocationUpdates(
+            if (mGoogleApiClient != null) LocationServices.FusedLocationApi.requestLocationUpdates(
                     mGoogleApiClient, mLocationRequest, this);
     }
 

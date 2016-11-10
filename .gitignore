@@ -16,9 +16,11 @@ app/src/release
 # generated files
 bin/  
 gen/
+.DS_Store
 
 # Local configuration file (sdk path, etc)
 local.properties
+keystore.properties
 
 # Eclipse project files
 .classpath
